@@ -11,8 +11,18 @@ import RewardsPage from '../../pages/Rewards'
 import AnalyticsPage from '../../pages/Analytics'
 import SettingsPage from '../../pages/Settings'
 
-function AppShell({ user, semester, onSignOut, sessionsVersion, onSessionsChanged, onSemesterChanged }) {
+function AppShell({
+  user,
+  semester,
+  onSignOut,
+  sessionsVersion,
+  onSessionsChanged,
+  onSemesterChanged,
+  theme,           // ← new from AppRoot
+  onThemeChange    // ← new from AppRoot
+}) {
 
+  const isDark = theme === 'dark'  // ← use this instead of local state
   // Date + Time display
   const [label, setLabel] = useState("")
 
@@ -44,19 +54,21 @@ function AppShell({ user, semester, onSignOut, sessionsVersion, onSessionsChange
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(true)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
-  const [theme, setTheme] = useState(() => {
-    if (typeof window === 'undefined') return 'light'
-    const saved = window.localStorage.getItem('odyssey:theme')
-    return saved === 'dark' ? 'dark' : 'light'
-  })
+  // const [theme, setTheme] = useState(() => {
+  //   if (typeof window === 'undefined') return 'light'
+  //   const saved = window.localStorage.getItem('odyssey:theme')
+  //   return saved === 'dark' ? 'dark' : 'light'
+  // })
+
+  // useEffect(() => {
+  //   if (typeof window === 'undefined') return
+  //   window.localStorage.setItem('odyssey:theme', theme)
+  // }, [theme])
+
 
   const navigate = useNavigate()
-  const isDark = theme === 'dark'
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    window.localStorage.setItem('odyssey:theme', theme)
-  }, [theme])
+
 
   useEffect(() => {
     if (typeof document === 'undefined') return
@@ -76,7 +88,7 @@ function AppShell({ user, semester, onSignOut, sessionsVersion, onSessionsChange
   return (
     <div
       className={[
-        'h-screen flex overflow-hidden',
+        'h-screen flex overflow-hidden ',
         isDark ? 'bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-900',
       ].join(' ')}
     >
@@ -313,7 +325,7 @@ function AppShell({ user, semester, onSignOut, sessionsVersion, onSessionsChange
                 Timer
               </button>
 
-              <div className="relative">
+              <div className="relative ">
                 <button
                   type="button"
                   className={`inline-flex items-center justify-center h-8 w-8 rounded-xl border shadow-sm ${isDark
@@ -324,13 +336,13 @@ function AppShell({ user, semester, onSignOut, sessionsVersion, onSessionsChange
                 >
                   {profileInitial}
                 </button>
-{/* 
-                {profileMenuOpen && (
-                  <div className={`absolute right-0 mt-2 w-44 rounded-2xl shadow-lg border py-1 text-xs z-40 ${isDark
+
+                {/* {profileMenuOpen && (
+                  <div className={`absolute right-0 mt-2 w-44 rounded-2xl shadow-lg border py-1 text-xs z-[1000]  ${isDark
                       ? 'bg-slate-800 border-slate-700 text-slate-200'
                       : 'bg-white border-slate-200 text-slate-700'
                     }`}>
-                    <div className={`px-3 py-2 border-b ${isDark ? 'border-slate-700' : 'border-slate-100'
+                    <div className={`px-3 py-2 border-b  ${isDark ? 'border-slate-700' : 'border-slate-100'
                       }`}>
                       <div className="font-semibold truncate">
                         {user?.email || 'Account'}
@@ -352,51 +364,50 @@ function AppShell({ user, semester, onSignOut, sessionsVersion, onSessionsChange
                   </div>
                 )} */}
 
+                
                 {profileMenuOpen && (
-                    <div
-                      className={`absolute right-0 mt-3 w-64 rounded-2xl shadow-xl border overflow-hidden text-sm z-[2000]
-                        ${isDark
-                          ? 'bg-slate-900/95 border-slate-700/60 text-slate-100'
-                          : 'bg-white/95 border-slate-200/60 text-slate-800'
+                  <div
+                    className={`absolute right-0 mt-3 w-64 rounded-2xl shadow-xl border overflow-hidden text-sm z-[2000]
+      ${isDark
+                        ? 'bg-slate-900/95 border-slate-700/60 text-slate-100'
+                        : 'bg-white/95 border-slate-200/60 text-slate-800'
+                      }`}
+                  >
+                    {/* User header with avatar */}
+                    <div className="px-5 py-4 flex items-center gap-3 border-b"
+                      style={{ borderColor: isDark ? 'rgba(51,65,85,0.5)' : 'rgba(226,232,240,0.8)' }}>
+                      <div className={`h-10 w-10 rounded-full flex items-center justify-center font-semibold text-lg shadow-inner
+        ${isDark ? 'bg-slate-700 text-slate-200' : 'bg-slate-200 text-slate-700'}`}>
+                        {profileInitial}
+                      </div>
+                      <div>
+                        <div className="font-medium truncate">
+                          {user?.email || 'Account'}
+                        </div>
+                        {semester && (
+                          <div className="text-xs opacity-70 mt-0.5">
+                            Active semester
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Sign out */}
+                    <button
+                      type="button"
+                      onClick={onSignOut}
+                      className={`w-full px-5 py-3.5 text-left font-medium transition-colors duration-200
+        ${isDark
+                          ? 'hover:bg-slate-800/60 text-slate-300'
+                          : 'hover:bg-slate-50 text-slate-700'
                         }`}
                     >
-                      {/* User header with avatar */}
-                      <div className="px-5 py-4 flex items-center gap-3 border-b"
-                           style={{ borderColor: isDark ? 'rgba(51,65,85,0.5)' : 'rgba(226,232,240,0.8)' }}>
-                        <div className={`h-10 w-10 rounded-full flex items-center justify-center font-semibold text-lg shadow-inner
-                          ${isDark ? 'bg-slate-700 text-slate-200' : 'bg-slate-200 text-slate-700'}`}>
-                          {profileInitial}
-                        </div>
-                        <div>
-                          <div className="font-medium truncate">
-                            {user?.email || 'Account'}
-                          </div>
-                          {semester && (
-                            <div className="text-xs opacity-70 mt-0.5">
-                              Active semester
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                  
-                      {/* Sign out */}
-                      <button
-                        type="button"
-                        onClick={onSignOut}
-                        className={`w-full px-5 py-3.5 text-left font-medium transition-colors duration-200
-                          ${isDark
-                            ? 'hover:bg-slate-800/60 text-slate-300'
-                            : 'hover:bg-slate-50 text-slate-700'
-                          }`}
-                      >
-                        Sign out
-                      </button>
-                    </div>
-                  )}
+                      Sign out
+                    </button>
+                  </div>
+                )}
 
 
-
-                
               </div>
             </div>
           </div>
@@ -472,7 +483,7 @@ function AppShell({ user, semester, onSignOut, sessionsVersion, onSessionsChange
                   />
                 }
               />
-              <Route
+              {/* <Route
                 path="/settings"
                 element={
                   <SettingsPage
@@ -480,7 +491,17 @@ function AppShell({ user, semester, onSignOut, sessionsVersion, onSessionsChange
                     onThemeChange={(nextTheme) => setTheme(nextTheme)}
                   />
                 }
+              /> */}
+              <Route
+                path="/settings"
+                element={
+                  <SettingsPage
+                    theme={theme}                // ← pass current theme
+                    onThemeChange={onThemeChange} // ← pass setter
+                  />
+                }
               />
+              
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </div>
