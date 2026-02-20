@@ -4,13 +4,26 @@ import AppShell from './components/layout/AppShell'
 import AuthScreen from './components/auth/AuthScreen'
 import SemesterSetupWizard from './components/auth/SemesterSetupWizard'
 
-
-
 function AppRoot() {
   const [user, setUser] = useState(null)
   const [semester, setSemester] = useState(null)
   const [initializing, setInitializing] = useState(true)
   const [sessionsVersion, setSessionsVersion] = useState(0)
+
+  // Theme state — defined once here at the root
+  const [theme, setTheme] = useState(() => {
+    if (typeof window === 'undefined') return 'light'
+    const saved = window.localStorage.getItem('odyssey:theme')
+    return saved === 'dark' ? 'dark' : 'light'
+  })
+
+  const isDark = theme === 'dark'
+
+  // Persist theme changes to localStorage
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    window.localStorage.setItem('odyssey:theme', theme)
+  }, [theme])
 
   useEffect(() => {
     let active = true
@@ -92,35 +105,46 @@ function AppRoot() {
     setSemester(latestSemester || null)
   }
 
+  // Loading screen – now uses isDark from root-level theme
   if (initializing) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center relative overflow-hidden">
+      <div className={`min-h-screen flex items-center justify-center px-6 transition-colors duration-300
+        ${isDark ? 'bg-slate-950' : 'bg-white'}`}
+      >
+        <div className="flex flex-col items-center gap-5">
+          <p className={`text-xl sm:text-2xl font-light tracking-wider uppercase
+            ${isDark ? 'text-slate-300' : 'text-slate-600'}`}
+          >
+            Preparing your dashboard
+          </p>
 
-        {/* Subtle background glow */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(56,189,248,0.15),transparent_60%)]" />
-
-        <div className="relative flex flex-col items-center gap-6">
-
-          {/* Animated Ring */}
-          <div className="relative h-14 w-14">
-            <div className="absolute inset-0 rounded-full border-2 border-slate-800" />
-            <div className="absolute inset-0 rounded-full border-2 border-t-sky-400 border-r-emerald-400 animate-spin" />
+          <div className="flex gap-3">
+            <span className={`w-3.5 h-3.5 rounded-full animate-slow-bounce
+              ${isDark ? 'bg-slate-400/80' : 'bg-slate-500/80'}`}
+              style={{ animationDelay: '0ms' }}
+            />
+            <span className={`w-3.5 h-3.5 rounded-full animate-slow-bounce
+              ${isDark ? 'bg-slate-400/80' : 'bg-slate-500/80'}`}
+              style={{ animationDelay: '200ms' }}
+            />
+            <span className={`w-3.5 h-3.5 rounded-full animate-slow-bounce
+              ${isDark ? 'bg-slate-400/80' : 'bg-slate-500/80'}`}
+              style={{ animationDelay: '400ms' }}
+            />
           </div>
-
-          {/* Text */}
-          <div className="text-center space-y-2">
-            <h2 className="text-sm tracking-wide text-slate-300">
-              Loading your Focus dashboard
-            </h2>
-            <p className="text-xs text-slate-500 leading-relaxed">
-              Push harder than yesterday <br />
-              if you want a different tomorrow.
-            </p>
-          </div>
-
         </div>
-      </div>
 
+        <style jsx>{`
+          @keyframes slowBounce {
+            0%, 100% { transform: translateY(0); opacity: 0.5; }
+            50%      { transform: translateY(-10px); opacity: 1; }
+          }
+
+          .animate-slow-bounce {
+            animation: slowBounce 1.8s infinite ease-in-out;
+          }
+        `}</style>
+      </div>
     )
   }
 
@@ -140,9 +164,10 @@ function AppRoot() {
       sessionsVersion={sessionsVersion}
       onSessionsChanged={handleSessionsChanged}
       onSemesterChanged={handleSemesterChanged}
+      theme={theme}              // ← pass theme down
+      onThemeChange={setTheme}   // ← pass setter so SettingsPage can change it
     />
   )
 }
-
 
 export default AppRoot
