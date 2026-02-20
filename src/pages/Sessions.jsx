@@ -504,6 +504,37 @@ function SessionsPage({ user, semester, onSessionsChanged, isDark = false }) {
   const sessionsTitleTextClass = isDark ? 'text-slate-100' : 'text-slate-900'
 
 
+      //======================== Title Timer (Only render on sessionpage not other) ===================
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+
+    // Default title
+    const baseTitle = "Odyssey - Deep Work";
+
+    if (!activeTimer) {
+      document.title = baseTitle;
+      return;
+    }
+
+    const seconds = mainTimerSeconds;
+    const formatted = formatTimer(seconds);
+
+    if (activeTimer.status === "paused") {
+      // document.title = `⏸ ${formatted} – ${baseTitle}`;
+      document.title = `Paused ${formatted} `;
+      return;
+    }
+
+    if (activeTimer.type === "pomodoro") {
+      document.title = `${formatted} – Focus `;
+    } else {
+      document.title = `${formatted} – Stopwatch `;
+    }
+  }, [activeTimer, mainTimerSeconds]);
+
+  //==================================================
+    
+
   return (
     <div className="space-y-6 lg:space-y-8">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
