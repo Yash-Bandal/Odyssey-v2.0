@@ -326,7 +326,7 @@ function AppShell({ user, semester, onSignOut, sessionsVersion, onSessionsChange
                 </button>
 
                 {profileMenuOpen && (
-                  <div className={`absolute right-0 mt-2 w-44 rounded-2xl shadow-lg border py-1 text-xs z-10 ${isDark
+                  <div className={`absolute right-0 mt-2 w-44 rounded-2xl shadow-lg border py-1 text-xs z-40 ${isDark
                       ? 'bg-slate-800 border-slate-700 text-slate-200'
                       : 'bg-white border-slate-200 text-slate-700'
                     }`}>
