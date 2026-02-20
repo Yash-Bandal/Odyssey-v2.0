@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, useRef } from 'react'
 import { supabase } from '../supabaseClient'
 import { StatCard, SectionCard } from './AppPages'
 import successSound from '../assets/session-success.mp3'
-
+import ClockImg from '../assets/Clock.png';
 
 function formatTimer(totalSeconds) {
   const safe = Number.isFinite(totalSeconds) && totalSeconds > 0 ? totalSeconds : 0
@@ -508,7 +508,7 @@ function SessionsPage({ user, semester, onSessionsChanged, isDark = false }) {
                 type="button"
                 onClick={() => handleModeSelect('pomodoro')}
                 className={[
-                  'inline-flex items-center rounded-xl border px-3 py-1.5 text-[11px] font-medium transition',
+                  'inline-flex items-center rounded-xl border px-3 py-2 text-[11px] font-medium transition',
                   timerMode === 'pomodoro'
                     ? 'border-sky-500 bg-sky-500 text-white shadow-sm'
                     : isDark
@@ -523,7 +523,7 @@ function SessionsPage({ user, semester, onSessionsChanged, isDark = false }) {
                 type="button"
                 onClick={() => handleModeSelect('stopwatch')}
                 className={[
-                  'inline-flex items-center rounded-xl border px-3 py-1.5 text-[11px] font-medium transition',
+                  'inline-flex items-center rounded-xl border px-3 py-2 text-[11px] font-medium transition',
                   timerMode === 'stopwatch'
                     ? 'border-sky-500 bg-sky-500 text-white shadow-sm'
                     : isDark
@@ -533,14 +533,33 @@ function SessionsPage({ user, semester, onSessionsChanged, isDark = false }) {
               >
                 Stopwatch
               </button>
-
+{/* 
               <button
                 type="button"
                 onClick={handleStartSelected}
                 className="inline-flex items-center rounded-xl bg-green-500 text-white px-3 py-1.5 text-[11px] font-semibold hover:bg-green-600 shadow-sm transition"
               >
                 Start
+              </button> */}
+
+              <button
+                type="button"
+                onClick={handleCompleteTimer}
+                disabled={!activeTimer}
+                className={[
+                  'inline-flex items-center rounded-xl bg-green-500 text-white px-3 py-1.5 text-[11px] font-semibold hover:bg-green-600 shadow-sm transition',
+                  activeTimer
+                    ? 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-sm'
+                    : 'bg-emerald-200 text-black  cursor-not-allowed',
+                ].join(' ')}
+              >
+                Save session
               </button>
+
+
+              
+
+
             </div>
           </div>
 
@@ -586,7 +605,7 @@ function SessionsPage({ user, semester, onSessionsChanged, isDark = false }) {
                   {activeTimer && activeTimer.status === 'running' ? 'Pause' : 'Resume'}
                 </button>
 
-                <button
+                {/* <button
                   type="button"
                   onClick={handleCompleteTimer}
                   disabled={!activeTimer}
@@ -598,6 +617,19 @@ function SessionsPage({ user, semester, onSessionsChanged, isDark = false }) {
                   ].join(' ')}
                 >
                   Save session
+                </button> */}
+
+                <button
+                  type="button"
+                  onClick={handleStartSelected}
+                  className={[
+                    "flex-1 inline-flex items-center justify-center rounded-2xl px-4 py-2 text-sm font-semibold transition",
+                    isDark
+                      ? "bg-white text-slate-900 hover:bg-slate-200 active:scale-[0.98]"
+                      : "bg-slate-900 text-white hover:bg-slate-800 active:scale-[0.98]"
+                  ].join(" ")}
+                >
+                  Start
                 </button>
 
                 <button
@@ -615,7 +647,8 @@ function SessionsPage({ user, semester, onSessionsChanged, isDark = false }) {
                         : 'border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed',
                   ].join(' ')}
                 >
-                  Stop in Between
+                  {/* Stop in Between */}
+                  Reset
                 </button>
               </div>
 
@@ -821,14 +854,27 @@ function SessionsPage({ user, semester, onSessionsChanged, isDark = false }) {
         <div className={['rounded-2xl shadow-sm p-5 space-y-6', isDark ? 'bg-slate-900 border border-slate-800' : 'bg-white border border-slate-200'].join(' ')}>
 
           {/* Header */}
-          <div>
-            <h2 className={['text-base font-semibold', sessionsTitleTextClass].join(' ')}>
-              Log manual session
-            </h2>
-            <p className={['text-xs mt-1', sessionsMutedTextClass].join(' ')}>
-              Add study time completed outside the timer.
-            </p>
+          <div className='flex relative'>
+            <div>
+              <h2 className={['text-base font-semibold', sessionsTitleTextClass].join(' ')}>
+                Log manual session
+              </h2>
+              <p className={['text-xs mt-1', sessionsMutedTextClass].join(' ')}>
+                Add study time completed outside the timer.
+              </p>
+
+            </div>
+
+            <img
+              src={ClockImg}
+              alt="Study time"
+              className={[
+                "w-20 h-auto transition-opacity absolute mb-5  top-0 right-0 max-sm:top-10 max-sm:w-18 ",
+                isDark ? "opacity-60" : "opacity-70"
+              ].join(" ")}
+            />
           </div>
+
 
           <form onSubmit={handleSaveManual} className="space-y-5">
 
