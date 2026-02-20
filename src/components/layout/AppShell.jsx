@@ -249,7 +249,7 @@ function AppShell({ user, semester, onSignOut, sessionsVersion, onSessionsChange
       ].join(' ')}>
 
         <header className={[
-          'border-b backdrop-blur',
+          'border-b backdrop-blur z-[1000]',
           isDark ? 'border-slate-800 bg-slate-900/80' : 'border-slate-200 bg-white/80',
         ].join(' ')}>
           <div className="flex items-center justify-between px-4 sm:px-6 h-16 gap-3">
@@ -324,7 +324,7 @@ function AppShell({ user, semester, onSignOut, sessionsVersion, onSessionsChange
                 >
                   {profileInitial}
                 </button>
-
+{/* 
                 {profileMenuOpen && (
                   <div className={`absolute right-0 mt-2 w-44 rounded-2xl shadow-lg border py-1 text-xs z-40 ${isDark
                       ? 'bg-slate-800 border-slate-700 text-slate-200'
@@ -350,7 +350,53 @@ function AppShell({ user, semester, onSignOut, sessionsVersion, onSessionsChange
                       Sign out
                     </button>
                   </div>
-                )}
+                )} */}
+
+                {profileMenuOpen && (
+                    <div
+                      className={`absolute right-0 mt-3 w-64 rounded-2xl shadow-xl border overflow-hidden text-sm z-[2000]
+                        ${isDark
+                          ? 'bg-slate-900/95 border-slate-700/60 text-slate-100'
+                          : 'bg-white/95 border-slate-200/60 text-slate-800'
+                        }`}
+                    >
+                      {/* User header with avatar */}
+                      <div className="px-5 py-4 flex items-center gap-3 border-b"
+                           style={{ borderColor: isDark ? 'rgba(51,65,85,0.5)' : 'rgba(226,232,240,0.8)' }}>
+                        <div className={`h-10 w-10 rounded-full flex items-center justify-center font-semibold text-lg shadow-inner
+                          ${isDark ? 'bg-slate-700 text-slate-200' : 'bg-slate-200 text-slate-700'}`}>
+                          {profileInitial}
+                        </div>
+                        <div>
+                          <div className="font-medium truncate">
+                            {user?.email || 'Account'}
+                          </div>
+                          {semester && (
+                            <div className="text-xs opacity-70 mt-0.5">
+                              Active semester
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                  
+                      {/* Sign out */}
+                      <button
+                        type="button"
+                        onClick={onSignOut}
+                        className={`w-full px-5 py-3.5 text-left font-medium transition-colors duration-200
+                          ${isDark
+                            ? 'hover:bg-slate-800/60 text-slate-300'
+                            : 'hover:bg-slate-50 text-slate-700'
+                          }`}
+                      >
+                        Sign out
+                      </button>
+                    </div>
+                  )}
+
+
+
+                
               </div>
             </div>
           </div>
