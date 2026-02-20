@@ -1,8 +1,213 @@
+// import { useState } from 'react'
+// import { supabase } from '../supabaseClient'
+// import { useSemesterCalculations } from '../hooks/useSemesterCalculations'
+
+
+// function GoalsPage({ user, semester, onSemesterChanged, isDark = false }) {
+//   //================Latest update============== 
+
+
+// //=================================================
+
+
+
+//   const [form, setForm] = useState({
+//     startDate: semester?.start_date || '',
+//     endDate: semester?.end_date || '',
+//     totalHours: semester?.total_goal_hours ? String(semester.total_goal_hours) : '',
+//   })
+//   const [saving, setSaving] = useState(false)
+//   const [error, setError] = useState('')
+//   const [success, setSuccess] = useState('')
+//   const goalsCardClass = isDark
+//     ? 'rounded-3xl bg-slate-900 border border-slate-800 shadow-sm p-6'
+//     : 'rounded-3xl bg-white border border-slate-200 shadow-sm p-6'
+//   const goalsTitleClass = isDark ? 'text-slate-100' : 'text-slate-900'
+//   const goalsMutedClass = isDark ? 'text-slate-400' : 'text-slate-500'
+//   const goalsInputClass = isDark
+//     ? 'w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500'
+//     : 'w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500'
+//   const goalsMiniCardClass = isDark
+//     ? 'rounded-2xl border border-slate-700 bg-slate-800 px-4 py-3'
+//     : 'rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3'
+
+//   const calculations = useSemesterCalculations({
+//     startDate: form.startDate,
+//     endDate: form.endDate,
+//     totalHours: form.totalHours,
+//   })
+
+//   const handleChange = (field, value) => {
+//     setForm((prev) => ({ ...prev, [field]: value }))
+//     setError('')
+//     setSuccess('')
+//   }
+
+//   const handleSave = async (event) => {
+//     event.preventDefault()
+//     setError('')
+//     setSuccess('')
+
+//     if (!calculations) {
+//       setError('Provide a valid date range and total goal hours.')
+//       return
+//     }
+
+//     setSaving(true)
+//     const { error: updateError } = await supabase
+//       .from('semesters')
+//       .update({
+//         start_date: form.startDate,
+//         end_date: form.endDate,
+//         total_goal_hours: Number(form.totalHours),
+//         total_study_days: calculations.totalDays,
+//         daily_required_hours: calculations.dailyAverage,
+//         weekly_required_hours: calculations.weeklyPace,
+//       })
+//       .eq('id', semester.id)
+//       .eq('user_id', user.id)
+//       .select('id')
+//       .single()
+
+//     setSaving(false)
+
+//     if (updateError) {
+//       setError(updateError.message || 'Unable to update semester goals.')
+//       return
+//     }
+
+//     if (onSemesterChanged) {
+//       await onSemesterChanged()
+//     }
+//     setSuccess('Goals updated successfully.')
+//   }
+
+//   return (
+//     <div className="space-y-6">
+//       <section className={goalsCardClass}>
+//         <div className="text-xs font-semibold uppercase tracking-[0.16em] text-sky-600">Goals</div>
+//         <h1 className={['mt-2 text-2xl font-semibold', goalsTitleClass].join(' ')}>Active Semester Goals</h1>
+//         <p className={['mt-2 text-sm', goalsMutedClass].join(' ')}>
+//           Update your current semester range and total target. Required pace values recalculate automatically.
+//         </p>
+//       </section>
+
+//       <section className={goalsCardClass}>
+//         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+//           <div className={goalsMiniCardClass}>
+//             <div className={['text-xs', goalsMutedClass].join(' ')}>Current start date</div>
+//             <div className={['mt-1 text-sm font-semibold', goalsTitleClass].join(' ')}>{semester.start_date || '-'}</div>
+//           </div>
+//           <div className={goalsMiniCardClass}>
+//             <div className={['text-xs', goalsMutedClass].join(' ')}>Current end date</div>
+//             <div className={['mt-1 text-sm font-semibold', goalsTitleClass].join(' ')}>{semester.end_date || '-'}</div>
+//             {/* <div className={['mt-1 text-sm font-semibold', goalsTitleClass].join(' ')}>{semester.end_date || 'â€”'}</div> */}
+//           </div>
+//           <div className={goalsMiniCardClass}>
+//             <div className={['text-xs', goalsMutedClass].join(' ')}>Current total goal</div>
+//             <div className={['mt-1 text-sm font-semibold', goalsTitleClass].join(' ')}>
+//               {semester.total_goal_hours ? `${Number(semester.total_goal_hours)} h` : '-'}
+//             </div>
+//           </div>
+//         </div>
+//       </section>
+
+//       <section className={goalsCardClass}>
+//         <form onSubmit={handleSave} className="space-y-6">
+//           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+//             <div className="space-y-1.5">
+//               <label className={['text-sm font-medium', isDark ? 'text-slate-300' : 'text-slate-600'].join(' ')}>Start date</label>
+//               <input
+//                 type="date"
+//                 value={form.startDate}
+//                 onChange={(event) => handleChange('startDate', event.target.value)}
+//                 className={goalsInputClass}
+//               />
+//             </div>
+//             <div className="space-y-1.5">
+//               <label className={['text-sm font-medium', isDark ? 'text-slate-300' : 'text-slate-600'].join(' ')}>End date</label>
+//               <input
+//                 type="date"
+//                 value={form.endDate}
+//                 onChange={(event) => handleChange('endDate', event.target.value)}
+//                 className={goalsInputClass}
+//               />
+//             </div>
+//             <div className="space-y-1.5">
+//               <label className={['text-sm font-medium', isDark ? 'text-slate-300' : 'text-slate-600'].join(' ')}>Total goal hours</label>
+//               <input
+//                 type="number"
+//                 min="1"
+//                 step="0.5"
+//                 value={form.totalHours}
+//                 onChange={(event) => handleChange('totalHours', event.target.value)}
+//                 className={goalsInputClass}
+//                 placeholder="e.g. 320"
+//               />
+//             </div>
+//           </div>
+
+//           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+//             <div className={goalsMiniCardClass}>
+//               <div className={['text-xs', goalsMutedClass].join(' ')}>Total study days</div>
+//               <div className={['mt-1 text-lg font-semibold', goalsTitleClass].join(' ')}>{calculations ? calculations.totalDays : '—'}</div>
+//             </div>
+//             <div className={goalsMiniCardClass}>
+//               <div className={['text-xs', goalsMutedClass].join(' ')}>Daily required</div>
+//               <div className={['mt-1 text-lg font-semibold', goalsTitleClass].join(' ')}>
+//                 {calculations ? `${calculations.dailyAverage.toFixed(2)} h` : '-'}
+//               </div>
+//             </div>
+//             <div className={goalsMiniCardClass}>
+//               <div className={['text-xs', goalsMutedClass].join(' ')}>Weekly required</div>
+//               <div className={['mt-1 text-lg font-semibold', goalsTitleClass].join(' ')}>
+//                 {calculations ? `${calculations.weeklyPace.toFixed(1)} h/week` : '-'}
+//               </div>
+//             </div>
+//           </div>
+
+//           {error && (
+//             <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+//               {error}
+//             </div>
+//           )}
+//           {success && (
+//             <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+//               {success}
+//             </div>
+//           )}
+
+//           <div className="flex justify-end">
+//             <button
+//               type="submit"
+//               disabled={saving}
+//               className={[
+//                 'inline-flex items-center rounded-xl px-5 py-2.5 text-sm font-semibold transition',
+//                 saving ? 'bg-slate-300 text-slate-500 cursor-wait' : 'bg-sky-500 text-white hover:bg-sky-600',
+//               ].join(' ')}
+//             >
+//               {saving ? 'Saving...' : 'Update goals'}
+//             </button>
+//           </div>
+//         </form>
+//       </section>
+
+
+
+
+
+//     </div>
+//   )
+// }
+
+
+// export default GoalsPage
 
 
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
 import Swal from "sweetalert2";
+import { playClick, playPause, playDropDown } from "../utils/sound"
 
 import { useSemesterCalculations } from '../hooks/useSemesterCalculations'
 import {
@@ -146,6 +351,7 @@ function GoalsPage({ user, semester, onSemesterChanged, isDark = false }) {
       confirmButtonText: "Save",
       confirmButtonColor: "#0ea5e9",
       cancelButtonText: "Cancel",
+      onClick: playDropDown()
     });
 
     if (!result.isConfirmed) return;
@@ -474,6 +680,10 @@ function GoalsPage({ user, semester, onSemesterChanged, isDark = false }) {
           <button
             type="button"
             onClick={handleSave}
+            // onClick={() => {
+            //   playClick()
+            //   handleSave()
+            // }}
             disabled={saving}
             className={saveButtonClass}
           >
@@ -556,7 +766,11 @@ function GoalsPage({ user, semester, onSemesterChanged, isDark = false }) {
 
               <button
                 type="button"
-                onClick={() => handleDeleteSubject(subject.id)}
+                onClick={() => {
+                  playPause()
+                  handleDeleteSubject(subject.id)
+                  
+                }}
                 className={deleteButtonClass}
               >
                 <Trash2 className="h-4 w-4" />
