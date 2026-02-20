@@ -4,12 +4,24 @@ import { StatCard, SectionCard } from './AppPages'
 import successSound from '../assets/session-success.mp3'
 import ClockImg from '../assets/Clock.png';
 
+import { playClick, playPause, playDropDown } from "../utils/sound"
+import {
+    Trash2,
+} from "lucide-react";
+
 function formatTimer(totalSeconds) {
   const safe = Number.isFinite(totalSeconds) && totalSeconds > 0 ? totalSeconds : 0
   const seconds = Math.floor(safe)
   const hours = Math.floor(seconds / 3600)
   const minutes = Math.floor((seconds % 3600) / 60)
   const remainingSeconds = seconds % 60
+
+  //===================
+  //button click sound
+
+  // Delete button (trash icon)
+ 
+  //====================
 
   if (hours > 0) {
     return [
@@ -104,6 +116,10 @@ function SessionsPage({ user, semester, onSessionsChanged, isDark = false }) {
   }, [])
 
   //==========================
+
+  //=======classes
+  const deleteButtonClass = isDark ? 'text-red-400 hover:text-red-300 transition' : 'text-red-500 hover:text-red-600 transition';
+  //=====================
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -544,7 +560,11 @@ function SessionsPage({ user, semester, onSessionsChanged, isDark = false }) {
 
               <button
                 type="button"
-                onClick={handleCompleteTimer}
+                // onClick={handleCompleteTimer}
+                onClick={() => {
+                  playPause()
+                  handleCompleteTimer()
+                }}
                 disabled={!activeTimer}
                 className={[
                   'inline-flex items-center rounded-xl bg-green-500 text-white px-3 py-1.5 text-[11px] font-semibold hover:bg-green-600 shadow-sm transition',
@@ -589,7 +609,11 @@ function SessionsPage({ user, semester, onSessionsChanged, isDark = false }) {
               <div className="flex flex-wrap gap-3 pt-4 w-full max-w-md">
                 <button
                   type="button"
-                  onClick={handlePauseResume}
+                  // onClick={handlePauseResume}
+                  onClick={() => {
+                    playPause()
+                    handlePauseResume()
+                  }}
                   disabled={!activeTimer}
                   className={[
                     'flex-1 inline-flex items-center justify-center rounded-2xl px-4 py-3 text-sm font-semibold transition',
@@ -621,7 +645,11 @@ function SessionsPage({ user, semester, onSessionsChanged, isDark = false }) {
 
                 <button
                   type="button"
-                  onClick={handleStartSelected}
+                  // onClick={handleStartSelected}
+                  onClick={() => {
+                    playClick()
+                    handleStartSelected()
+                  }}
                   className={[
                     "flex-1 inline-flex items-center justify-center rounded-2xl px-4 py-2 text-sm font-semibold transition",
                     isDark
@@ -634,7 +662,11 @@ function SessionsPage({ user, semester, onSessionsChanged, isDark = false }) {
 
                 <button
                   type="button"
-                  onClick={handleCancelTimer}
+                  // onClick={handleCancelTimer}
+                  onClick={() => {
+                    playPause()
+                    handleCancelTimer()
+                  }}
                   disabled={!activeTimer}
                   className={[
                     'flex-1 inline-flex items-center justify-center rounded-2xl border px-4 py-3 text-sm font-medium transition',
@@ -678,6 +710,7 @@ function SessionsPage({ user, semester, onSessionsChanged, isDark = false }) {
                     value={activeTimer.subjectId}
                     onChange={(event) =>
                       handleUpdateActive('subjectId', event.target.value)
+
                     }
                     className={['rounded-2xl border px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-sky-500', sessionsInputClass].join(' ')}
                   >
@@ -876,7 +909,8 @@ function SessionsPage({ user, semester, onSessionsChanged, isDark = false }) {
           </div>
 
 
-          <form onSubmit={handleSaveManual} className="space-y-5">
+          <form onSubmit={handleSaveManual}
+           className="space-y-5">
 
             {/* Session Name */}
             <div className="space-y-1.5">
@@ -899,7 +933,12 @@ function SessionsPage({ user, semester, onSessionsChanged, isDark = false }) {
               </label>
               <select
                 value={manualForm.subjectId}
-                onChange={(event) => handleManualChange('subjectId', event.target.value)}
+                onChange={(event) => {
+                  playDropDown()
+                  handleManualChange('subjectId', event.target.value)
+
+
+                }}
                 className={['w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500', sessionsInputClass].join(' ')}
               >
                 <option value="">Select subject</option>
@@ -945,7 +984,7 @@ function SessionsPage({ user, semester, onSessionsChanged, isDark = false }) {
                   <input
                     type="text"
                     placeholder="14:30"
-                    value={manualForm.startTime?.split('T')[1] || ''}
+                    value={manualForm.startTime?.split('T')[1] || '00:00'}
                     onChange={(event) => {
                       const date = manualForm.startTime?.split('T')[0] || ''
                       handleManualChange('startTime', `${date}T${event.target.value}`)
@@ -960,7 +999,7 @@ function SessionsPage({ user, semester, onSessionsChanged, isDark = false }) {
                   <input
                     type="text"
                     placeholder="16:00"
-                    value={manualForm.endTime?.split('T')[1] || ''}
+                    value={manualForm.endTime?.split('T')[1] || '00:00'}
                     onChange={(event) => {
                       const date = manualForm.endTime?.split('T')[0] || ''
                       handleManualChange('endTime', `${date}T${event.target.value}`)
@@ -1011,6 +1050,9 @@ function SessionsPage({ user, semester, onSessionsChanged, isDark = false }) {
             {/* Submit */}
             <button
               type="submit"
+              onClick={() => {
+                playPause()
+              }}
               disabled={savingManual}
               className={[
                 'w-full rounded-xl px-4 py-2.5 text-sm font-semibold transition',
@@ -1157,10 +1199,16 @@ function SessionsPage({ user, semester, onSessionsChanged, isDark = false }) {
 
                       <button
                         type="button"
-                        onClick={() => handleDeleteSession(session.id)}
-                        className={['rounded-xl px-3 py-1.5 text-sm font-medium transition hover:text-red-500', isDark ? 'text-slate-400 hover:bg-red-900/20' : 'text-slate-500 hover:bg-red-50'].join(' ')}
+                        onClick={() => {
+                          playPause()
+                          handleDeleteSession(session.id)
+                        
+                        }}
+                        // className={['rounded-xl px-3 py-1.5 text-sm font-medium transition hover:text-red-500', isDark ? 'text-slate-400 hover:bg-red-900/20' : 'text-slate-500 hover:bg-red-50'].join(' ')}
+                        className={deleteButtonClass}
                       >
-                        Delete
+                        {/* Delete */}
+                        <Trash2 className="h-5 w-5" />
                       </button>
 
                     </div>
