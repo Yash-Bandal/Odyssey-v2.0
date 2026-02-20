@@ -22,6 +22,9 @@ import { StatCard } from './AppPages'
 import StudyTimeImg from "../assets/StudyTime.png";
 import WeekDaysImg from "../assets/weekdays.png";
 import ActivityImg from "../assets/Activity.png";
+import RewLogo from "../assets/rewards/RewLogo.PNG";
+
+import { Plus, Check, Trash2, ListTodo } from "lucide-react"
 
 function DashboardPlaceholder({ user, semester, sessionsVersion, isDark = false }) {
   const [summary, setSummary] = useState({
@@ -790,137 +793,263 @@ function DashboardPlaceholder({ user, semester, sessionsVersion, isDark = false 
         </div>
       </div>
 
-      {/* Dashboard Rewards Section*/}
+      {/* Dashboard Rewards Section */}
       <div className={dashboardCardClass}>
-        <div className="flex  items-center justify-between mb-6">
+
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-2">
+            {/* <ListTodo className="h-5 w-5 text-indigo-500" /> */}
+            <img
+              src={RewLogo}
+              alt="Rewards"
+              className={[
+                "w-16 h-auto transition-opacity duration-300 bsolute top-0 right-20  max-sm:top-0 ",
+                isDark ? "opacity-80" : "opacity-90"
+              ].join(" ")}
+            />
+
           <h2 className={dashboardTitleClass}>Rewards</h2>
-          <span className={['text-xs', dashboardMutedTextClass].join(' ')}>
-            {rewardBadges.filter((reward) => reward.unlocked).length}/{rewardBadges.length || TIME_BADGES.length} unlocked
+          </div>
+
+
+
+          <span className={[
+            "text-xs font-medium px-3 py-1 rounded-full",
+            isDark
+              ? "bg-slate-800 text-slate-300"
+              : "bg-slate-100 text-slate-600"
+          ].join(" ")}>
+            {rewardBadges.filter((reward) => reward.unlocked).length}/
+            {rewardBadges.length || TIME_BADGES.length}
           </span>
         </div>
 
-        <div className="flex flex-wrap gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+
           {rewardBadges.map((reward) => (
+
             <div
               key={reward.key}
               className={[
-                'w-full sm:w-[calc(50%-0.375rem)] xl:w-[calc(33.333%-0.5rem)] rounded-2xl border px-4 py-3 flex items-start justify-between gap-3',
-                isDark ? 'border-slate-700 bg-slate-800/80' : 'border-slate-200 bg-slate-50',
-              ].join(' ')}
+                "relative rounded-3xl border p-5 transition-all duration-300 overflow-hidden",
+                reward.unlocked
+                  ? isDark
+                    ? "border-amber-500/40 bg-slate-900 shadow-[0_0_18px_rgba(251,191,36,0.15)]"
+                    : "border-amber-300 bg-white shadow-sm"
+                  : isDark
+                    ? "border-slate-700 bg-slate-900"
+                    : "border-slate-200 bg-slate-50"
+              ].join(" ")}
             >
-              <div className="flex items-start gap-3 min-w-0">
-                <div className={['h-14 w-14 shrink-0 rounded-md border p-1.5 flex items-center justify-center', isDark ? 'border-slate-700 bg-slate-900' : 'border-slate-200 bg-white'].join(' ')}>
-                  {REWARD_ICONS[reward.key] ? (
+
+              {/* Subtle glow for unlocked */}
+              {reward.unlocked && (
+                <div className="absolute inset-0 bg-gradient-to-br from-amber-400/10 via-transparent to-rose-400/10 pointer-events-none" />
+              )}
+
+              <div className="relative flex items-start gap-4">
+
+                {/* Badge Icon */}
+                <div className={[
+                  "h-16 w-16 rounded-lg flex items-center justify-center shrink-0 border transition",
+                  reward.unlocked
+                    ? isDark
+                      ? "border-amber-500/50 bg-slate-800"
+                      : "border-amber-300 bg-amber-50"
+                    : isDark
+                      ? "border-slate-700 bg-slate-800"
+                      : "border-slate-200 bg-white"
+                ].join(" ")}>
+                  {REWARD_ICONS[reward.key] && (
                     <img
                       src={REWARD_ICONS[reward.key]}
                       alt={`${reward.label} badge`}
                       className={[
-                        'h-full w-full object-contain rounded-md transition-all duration-300',
-                        reward.unlocked ? 'opacity-100' : 'opacity-40 ',
-                      ].join(' ')}
+                        "h-14 w-14 object-contain transition-all duration-300 rounded-lg",
+                        reward.unlocked
+                          ? "opacity-100"
+                          : "opacity-40 grayscale"
+                      ].join(" ")}
                     />
-                  ) : null}
+                  )}
                 </div>
-                <div className="min-w-0">
-                  <div className={['text-sm font-semibold truncate', isDark ? 'text-slate-100' : 'text-slate-900'].join(' ')}>{reward.label}</div>
-                  <div className={['text-xs', dashboardMutedTextClass].join(' ')}>{reward.description}</div>
-                  <div className={['text-xs mt-1', dashboardMutedTextClass].join(' ')}>
-                    Unlocked {reward.unlockCount} {reward.unlockCount === 1 ? 'time' : 'times'}
+
+                {/* Text Content */}
+                <div className="flex-1 min-w-0 space-y-1">
+
+                  <div className={[
+                    "text-sm font-semibold",
+                    reward.unlocked
+                      ? isDark
+                        ? "text-amber-300"
+                        : "text-amber-700"
+                      : isDark
+                        ? "text-slate-200"
+                        : "text-slate-800"
+                  ].join(" ")}>
+                    {reward.label}
                   </div>
+
+                  <div className={["text-xs", dashboardMutedTextClass].join(" ")}>
+                    {reward.description}
+                  </div>
+
+                  <div className={["text-[11px] mt-1", dashboardMutedTextClass].join(" ")}>
+                    Unlocked {reward.unlockCount} {reward.unlockCount === 1 ? "time" : "times"}
+                  </div>
+
                 </div>
+
               </div>
-              <span
-                className={[
-                  'inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold',
-                  reward.unlocked
-                    ? isDark
-                      ? 'bg-emerald-900/40 text-emerald-300'
-                      : 'bg-emerald-50 text-emerald-700'
-                    : isDark
-                      ? 'bg-slate-700 text-slate-300'
-                      : 'bg-slate-200 text-slate-600',
-                ].join(' ')}
-              >
-                {reward.unlocked ? 'Unlocked' : 'Locked'}
-              </span>
+
+              {/* Status Pill */}
+              <div className="mt-4">
+                <span
+                  className={[
+                    "inline-flex items-center rounded-full px-3 py-1 text-[11px] font-semibold tracking-wide",
+                    reward.unlocked
+                      ? isDark
+                        ? "bg-amber-500/20 text-amber-300"
+                        : "bg-amber-100 text-amber-700"
+                      : isDark
+                        ? "bg-slate-800 text-slate-400"
+                        : "bg-slate-200 text-slate-600"
+                  ].join(" ")}
+                >
+                  {reward.unlocked ? "Achievement unlocked" : "Locked"}
+                </span>
+              </div>
+
             </div>
+
           ))}
+
         </div>
       </div>
 
       {/* Todo  */}
+      {/* Quick Todo */}
       <div className={dashboardCardClass}>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className={dashboardTitleClass}>Quick Todo</h2>
-          <span className={['text-xs', dashboardMutedTextClass].join(' ')}>
-            {todoItems.filter((item) => item.done).length}/{todoItems.length} done
+
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2">
+            <ListTodo className="h-5 w-5 text-indigo-500" />
+            <h2 className={dashboardTitleClass}>Quick Todo</h2>
+          </div>
+
+          <span className={['text-xs font-medium', dashboardMutedTextClass].join(' ')}>
+            {todoItems.filter((item) => item.done).length}/{todoItems.length}
           </span>
         </div>
 
-        <form onSubmit={handleAddTodo} className="flex gap-2 mb-4">
-          <input
-            type="text"
-            value={todoInput}
-            onChange={(event) => setTodoInput(event.target.value)}
-            placeholder="Add a task..."
-            className={[
-              'flex-1 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500',
-              isDark ? 'bg-slate-950 border border-slate-700 text-slate-100' : 'border border-slate-300 text-slate-800',
-            ].join(' ')}
-          />
+        {/* Add Form */}
+        <form onSubmit={handleAddTodo} className="flex gap-2 mb-5">
+
+          <div className="relative flex-1">
+            <input
+              type="text"
+              value={todoInput}
+              onChange={(event) => setTodoInput(event.target.value)}
+              placeholder="Add a task..."
+              className={[
+                'w-full rounded-2xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition',
+                isDark
+                  ? 'bg-slate-950 border border-slate-700 text-slate-100 placeholder:text-slate-500'
+                  : 'bg-white border border-slate-300 text-slate-800 placeholder:text-slate-400'
+              ].join(' ')}
+            />
+          </div>
+
           <button
             type="submit"
-            className="rounded-xl bg-sky-500 text-white px-4 py-2 text-sm font-semibold hover:bg-sky-600"
+            className="inline-flex items-center justify-center rounded-2xl bg-slate-900 text-white px-4 py-2.5 hover:bg-slate-800 transition shadow-sm"
           >
-            Add
+            <Plus className="h-4 w-4" />
           </button>
+
         </form>
 
-        <div className="space-y-2">
+        {/* Todo List */}
+        <div className="space-y-3">
+
           {todoItems.length === 0 ? (
-            <div className={['rounded-xl border px-3 py-2 text-sm', isDark ? 'border-slate-700 bg-slate-800 text-slate-400' : 'border-slate-200 bg-slate-50 text-slate-500'].join(' ')}>
-              No tasks yet.
+            <div className={[
+              'rounded-2xl border px-4 py-6 text-sm text-center',
+              isDark
+                ? 'border-slate-700 bg-slate-900 text-slate-500'
+                : 'border-slate-200 bg-slate-50 text-slate-500'
+            ].join(' ')}>
+              Nothing planned yet.
             </div>
           ) : (
+
             todoItems.map((item) => (
               <div
                 key={item.id}
-                className={['rounded-xl border px-3 py-2 flex items-center justify-between gap-3', isDark ? 'border-slate-700 bg-slate-800/80' : 'border-slate-200 bg-slate-50'].join(' ')}
+                className={[
+                  'group rounded-2xl border px-4 py-3 flex items-center justify-between transition',
+                  isDark
+                    ? 'border-slate-700 bg-slate-900 hover:bg-slate-800'
+                    : 'border-slate-200 bg-white hover:bg-slate-50'
+                ].join(' ')}
               >
+
+                {/* Left side */}
                 <button
                   type="button"
                   onClick={() => handleToggleTodo(item.id)}
-                  className="flex items-center gap-2 text-left flex-1"
+                  className="flex items-center gap-3 flex-1 text-left"
                 >
+
+                  {/* Checkbox */}
+                  <div className={[
+                    'h-8 w-8 flex items-center justify-center rounded-full border transition',
+                    item.done
+                      ? 'bg-green-400 border-white'
+                      : isDark
+                        ? 'border-slate-600 bg-slate-950'
+                        : 'border-slate-300 bg-white'
+                  ].join(' ')}>
+                    {item.done && (
+                      <Check className="h-3 w-3 text-white" />
+                    )}
+                  </div>
+
+                  {/* Title */}
                   <span
                     className={[
-                      'h-4 w-4 rounded border',
+                      'text-sm font-medium transition',
                       item.done
-                        ? 'bg-emerald-500 border-emerald-500'
+                        ? isDark
+                          ? 'text-slate-500 line-through'
+                          : 'text-slate-400 line-through'
                         : isDark
-                          ? 'bg-slate-900 border-slate-600'
-                          : 'bg-white border-slate-300',
+                          ? 'text-slate-200'
+                          : 'text-slate-800'
                     ].join(' ')}
-                  />
-                  <span
-                    className={item.done
-                      ? ['text-sm line-through', isDark ? 'text-slate-500' : 'text-slate-400'].join(' ')
-                      : ['text-sm', isDark ? 'text-slate-200' : 'text-slate-700'].join(' ')}
                   >
                     {item.title}
                   </span>
+
                 </button>
+
+                {/* Delete */}
                 <button
                   type="button"
                   onClick={() => handleDeleteTodo(item.id)}
-                  className={['text-xs font-medium hover:text-red-500', isDark ? 'text-slate-400' : 'text-slate-500'].join(' ')}
+                  className="opacity-0 group-hover:opacity-100 transition text-slate-400 hover:text-red-500"
                 >
-                  Delete
+                  <Trash2 className="h-6 w-6" />
                 </button>
+
               </div>
             ))
+
           )}
         </div>
+
       </div>
 
 
@@ -930,7 +1059,7 @@ function DashboardPlaceholder({ user, semester, sessionsVersion, isDark = false 
   )
 }
 
-// Removed unused formatDuration utility
+
 
 
 export default DashboardPlaceholder
