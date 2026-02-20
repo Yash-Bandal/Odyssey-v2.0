@@ -10,6 +10,110 @@ function CalendarPage({ user, semester, sessionsVersion, isDark = false }) {
     return new Date(now.getFullYear(), now.getMonth(), 1)
   })
   const [selectedDateKey, setSelectedDateKey] = useState(() => toLocalDateKey(new Date()))
+  //================Notes taking per day feature
+  const [note, setNote] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  const [journalMap, setJournalMap] = useState(new Map())
+
+  //Load Note When selectedDateKey Changes
+  useEffect(() => {
+    const loadNote = async () => {
+      const { data } = await supabase
+        .from('daily_journal')
+        .select('note')
+        .eq('user_id', user.id)
+        .eq('date_key', selectedDateKey)
+        .maybeSingle()
+
+      if (data) {
+        setNote(data.note || '')
+      } else {
+        setNote('')
+      }
+    }
+
+    loadNote()
+  }, [selectedDateKey, user.id])
+
+  //auto save
+  useEffect(() => {
+    if (!selectedDateKey) return
+
+    const timeout = setTimeout(async () => {
+      setSaving(true)
+
+      const trimmedNote = note.trim()
+
+      if (trimmedNote.length === 0) {
+        // 🗑 If note is empty → delete journal entry
+        await supabase
+          .from('daily_journal')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('date_key', selectedDateKey)
+
+        // Remove from journalMap
+        setJournalMap(prev => {
+          const updated = new Map(prev)
+          updated.delete(selectedDateKey)
+          return updated
+        })
+
+      } else {
+        // 💾 Save / Update journal entry
+        await supabase
+          .from('daily_journal')
+          .upsert(
+            {
+              user_id: user.id,
+              date_key: selectedDateKey,
+              note: trimmedNote,
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: 'user_id,date_key' }
+          )
+
+        // Update journalMap
+        setJournalMap(prev => {
+          const updated = new Map(prev)
+          updated.set(selectedDateKey, { note: trimmedNote })
+          return updated
+        })
+      }
+
+      setSaving(false)
+    }, 600)
+
+    return () => clearTimeout(timeout)
+  }, [note, selectedDateKey, user.id])
+
+  useEffect(() => {
+    const loadMonthJournal = async () => {
+      const start = new Date(viewDate.getFullYear(), viewDate.getMonth(), 1)
+      const end = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 0)
+
+      const { data } = await supabase
+        .from('daily_journal')
+        .select('date_key, note')
+        .eq('user_id', user.id)
+        .gte('date_key', toLocalDateKey(start))
+        .lte('date_key', toLocalDateKey(end))
+
+      const map = new Map()
+        ; (data || []).forEach(row => {
+          map.set(row.date_key, row)
+        })
+
+      setJournalMap(map)
+    }
+
+    loadMonthJournal()
+  }, [viewDate, user.id])
+
+  //============
+
+
 
   useEffect(() => {
     const load = async () => {
@@ -91,6 +195,7 @@ function CalendarPage({ user, semester, sessionsVersion, isDark = false }) {
 
   return (
     <div className="space-y-6">
+      {/* Calender section  */}
       <section className={calendarCardClass}>
         <div className="flex items-center justify-between gap-3 mb-4">
           <div>
@@ -122,6 +227,7 @@ function CalendarPage({ user, semester, sessionsVersion, isDark = false }) {
           </div>
         </div>
 
+{/* day grid  */}
         {loading ? (
           <div className={['h-56 flex items-center justify-center text-sm', calendarMutedClass].join(' ')}>Loading calendar...</div>
         ) : (
@@ -139,23 +245,73 @@ function CalendarPage({ user, semester, sessionsVersion, isDark = false }) {
                     key={cell.key}
                     type="button"
                     onClick={() => setSelectedDateKey(cell.key)}
+
                     className={[
-                      'min-h-[88px] rounded-2xl border p-2 text-left transition-colors',
+                      'min-h-[88px] rounded-2xl border p-2 text-left transition-all duration-200 group relative',
+
+                      // Base background
                       cell.inMonth
                         ? isDark
-                          ? 'bg-slate-900 border-slate-700 hover:bg-slate-800'
-                          : 'bg-white border-slate-200 hover:bg-slate-50'
+                          ? 'hover:bg-slate-800'
+                          : 'hover:bg-slate-50'
                         : isDark
-                          ? 'bg-slate-950 border-slate-800 text-slate-500'
-                          : 'bg-slate-50 border-slate-100 text-slate-400',
+                          ? 'bg-slate-950 text-slate-500'
+                          : 'bg-slate-50 text-slate-400',
+
+                      // 🔥 If has sessions → brighter green + soft overlay
+                      cell.count > 0
+                        ? isDark
+                          ? 'border-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 shadow-[0_0_8px_rgba(16,185,129,0.35)]'
+                          : 'border-emerald-500 bg-emerald-50 hover:bg-emerald-100'
+                        : cell.inMonth
+                          ? isDark
+                            ? 'bg-slate-900 border-slate-700'
+                            : 'bg-white border-slate-200'
+                          : isDark
+                            ? 'border-slate-800'
+                            : 'border-slate-100',
+
+                      // Selected override (must stay last)
                       selected ? 'ring-2 ring-sky-300 border-sky-300' : '',
                     ].join(' ')}
+
+
+                    // className={[
+                    //   'min-h-[88px] rounded-2xl border p-2 text-left transition-colors',
+                    //   cell.inMonth
+                    //     ? isDark
+                    //       ? 'bg-slate-900 border-slate-700 hover:bg-slate-800'
+                    //       : 'bg-white border-slate-200 hover:bg-slate-50'
+                    //     : isDark
+                    //       ? 'bg-slate-950 border-slate-800 text-slate-500'
+                    //       : 'bg-slate-50 border-slate-100 text-slate-400',
+                    //   selected ? 'ring-2 ring-sky-300 border-sky-300' : '',
+                    // ].join(' ')}
                   >
-                    <div className="text-xs font-semibold">{cell.date.getDate()}</div>
+                    <div className="text-xs sm:text-lg font-semibold">
+                      {cell.date.getDate()}
+                      </div>
+
+            {/* New ==================*/}
+
+
+                    {journalMap.get(cell.key)?.note?.trim().length > 0 && (
+                      <div className="mt-1  h-2 w-2 rounded-full bg-sky-500" />
+                    )}
+
+
+                    {journalMap.get(cell.key)?.note?.trim().length > 0 && (
+                      <div className="hidden sm:block absolute z-20 bottom-full mb-2 left-1/2 -translate-x-1/2 w-44 rounded-xl border bg-white p-2 text-xs shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+                        {journalMap.get(cell.key).note?.slice(0, 80)}
+                      </div>
+                    )}
+                    {/* =================== */}
+
+
                     <div className={['mt-2 text-[11px]', calendarMutedClass].join(' ')}>
                       {cell.minutes > 0 ? `${Math.round(cell.minutes)} min` : '0 min'}
                     </div>
-                    <div className={['text-[11px]', isDark ? 'text-slate-500' : 'text-slate-400'].join(' ')}>
+                    <div className={['max-sm:hidden text-[11px] sm:text-[14px]' , isDark ? 'text-slate-500' : 'text-slate-400'].join(' ')}>
                       {cell.count > 0 ? `${cell.count} sessions` : 'No sessions'}
                     </div>
                   </button>
@@ -166,6 +322,32 @@ function CalendarPage({ user, semester, sessionsVersion, isDark = false }) {
         )}
       </section>
 
+      {/* Notes  */}
+
+
+      <section className={calendarCardClass}>
+        <h2 className={calendarTitleClass}>Daily Journal</h2>
+
+        <textarea
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          placeholder="Write reflections, insights, what worked, what didn’t..."
+          className={[
+            'w-full mt-3 rounded-2xl border p-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400',
+            isDark
+              ? 'bg-slate-900 border-slate-700 text-slate-100'
+              : 'bg-white border-slate-200 text-slate-800'
+          ].join(' ')}
+          rows={5}
+        />
+
+        <div className="flex items-center justify-between mt-2 text-xs text-slate-400">
+          <span>{saving ? 'Saving...' : 'Saved'}</span>
+          
+        </div>
+      </section>
+
+{/* Logs */}
       <section className={calendarCardClass}>
         <h2 className={['text-lg font-semibold', calendarTitleClass].join(' ')}>
           {new Date(`${selectedDateKey}T00:00:00`).toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' })}
