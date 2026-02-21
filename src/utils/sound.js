@@ -1,5 +1,5 @@
 import clickSound from "../assets/click-sound.mp3"
-import pauseSound from "../assets/pause.mp3"
+import pauseSound from "../assets/pauseF.mp3"
 import dropDownSound from "../assets/dropDown.mp3"
 
 const clickAudio = new Audio(clickSound)
