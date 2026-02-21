@@ -301,7 +301,12 @@ function CalendarPage({ user, semester, sessionsVersion, isDark = false }) {
 
 
                     {journalMap.get(cell.key)?.note?.trim().length > 0 && (
-                      <div className="hidden sm:block absolute z-20 bottom-full mb-2 left-1/2 -translate-x-1/2 w-44 rounded-xl border bg-white p-2 text-xs shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+                      <div
+                        className={`hidden sm:block absolute z-20 bottom-full mb-2 left-1/2
+                        -translate-x-1/2 w-44 rounded-xl border bg-white p-2 text-xs shadow-lg
+                        opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none
+                        ${isDark ? "text-black" : "text-white"}`}
+                      >
                         {journalMap.get(cell.key).note?.slice(0, 80)}
                       </div>
                     )}
