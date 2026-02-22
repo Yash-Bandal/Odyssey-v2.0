@@ -484,6 +484,15 @@ function AppShell({
                   />
                 }
               />
+
+               <Route
+                path="/reset-password"
+                element={
+                  <ResetPassword
+                    isDark={isDark}
+                  />
+                }
+              />
               {/* <Route
                 path="/settings"
                 element={
@@ -504,7 +513,7 @@ function AppShell({
               />
 
               <Route path="*" element={<Navigate to="/" replace />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
+
             </Routes>
           </div>
         </main>
