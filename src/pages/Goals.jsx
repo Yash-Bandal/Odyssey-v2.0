@@ -207,7 +207,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
 import Swal from "sweetalert2";
-import { playClick, playPause, playDropDown } from "../utils/sound"
+import { playClick, playPause, playDropDown, playDelete } from "../utils/sound"
 
 import { useSemesterCalculations } from '../hooks/useSemesterCalculations'
 import {
@@ -451,6 +451,7 @@ function GoalsPage({ user, semester, onSemesterChanged, isDark = false }) {
   //   setSubjects((prev) => prev.filter((s) => s.id !== id))
   // }
   const handleDeleteSubject = async (id) => {
+
     if (!id) {
       setSubjects((prev) => prev.filter((s) => s.id !== id));
       return;
@@ -464,10 +465,12 @@ function GoalsPage({ user, semester, onSemesterChanged, isDark = false }) {
       confirmButtonColor: "#ef4444",
       cancelButtonColor: "#64748b",
       confirmButtonText: "Yes, delete",
+
     });
 
     if (!result.isConfirmed) return;
-
+    // 🔊 PLAY SOUND HERE (after confirm button click)
+    playDelete();
     const { error } = await supabase
       .from("subjects")
       .delete()
@@ -767,7 +770,7 @@ function GoalsPage({ user, semester, onSemesterChanged, isDark = false }) {
               <button
                 type="button"
                 onClick={() => {
-                  playPause()
+                  playDelete()
                   handleDeleteSubject(subject.id)
                   
                 }}
