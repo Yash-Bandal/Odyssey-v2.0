@@ -4,9 +4,9 @@ import { StatCard, SectionCard } from './AppPages'
 import successSound from '../assets/session-success.mp3'
 import ClockImg from '../assets/Clock.png';
 
-import { playClick, playPause, playDropDown } from "../utils/sound"
+import { playClick, playPause, playDropDown ,playDelete} from "../utils/sound"
 import {
-    Trash2,
+  Trash2,
 } from "lucide-react";
 
 function formatTimer(totalSeconds) {
@@ -20,7 +20,7 @@ function formatTimer(totalSeconds) {
   //button click sound
 
   // Delete button (trash icon)
- 
+
   //====================
 
   if (hours > 0) {
@@ -38,6 +38,10 @@ function formatTimer(totalSeconds) {
 }
 
 function SessionsPage({ user, semester, onSessionsChanged, isDark = false }) {
+
+  //=========== Avoid Duplicate log========
+  const hasCompletedRef = useRef(false)
+  //====================================
   const [subjects, setSubjects] = useState([])
   const [sessions, setSessions] = useState([])
   const [loading, setLoading] = useState(true)
@@ -475,18 +479,40 @@ function SessionsPage({ user, semester, onSessionsChanged, isDark = false }) {
     return activeTimer ? elapsed : 0
   })()
 
+  // useEffect(() => {
+  //   if (!activeTimer) return
+  //   if (activeTimer.type !== 'pomodoro') return
+  //   if (activeTimer.status !== 'running') return
+  //   if (remaining === null || remaining > 0) return
+
+  //   const complete = async () => {
+  //     await handleCompleteTimer()
+  //   }
+
+  //   complete()
+  // }, [activeTimer, remaining, handleCompleteTimer])
+
   useEffect(() => {
-    if (!activeTimer) return
+    if (!activeTimer) {
+      hasCompletedRef.current = false
+      return
+    }
+
     if (activeTimer.type !== 'pomodoro') return
     if (activeTimer.status !== 'running') return
     if (remaining === null || remaining > 0) return
+
+    // 🔒 Prevent duplicate completion
+    if (hasCompletedRef.current) return
+
+    hasCompletedRef.current = true
 
     const complete = async () => {
       await handleCompleteTimer()
     }
 
     complete()
-  }, [activeTimer, remaining, handleCompleteTimer])
+  }, [activeTimer, remaining])
 
   const sessionsCardClass = isDark
     ? 'rounded-3xl bg-slate-900 text-slate-100 shadow-sm border border-slate-800'
@@ -504,7 +530,8 @@ function SessionsPage({ user, semester, onSessionsChanged, isDark = false }) {
   const sessionsTitleTextClass = isDark ? 'text-slate-100' : 'text-slate-900'
 
 
-      //======================== Title Timer (Only render on sessionpage not other) ===================
+
+  //======================== Title Timer (Only render on sessionpage not other) ===================
   useEffect(() => {
     if (typeof document === "undefined") return;
 
@@ -532,8 +559,56 @@ function SessionsPage({ user, semester, onSessionsChanged, isDark = false }) {
     }
   }, [activeTimer, mainTimerSeconds]);
 
+  // useEffect(() => {
+  //   if (typeof document === "undefined") return;
+
+  //   const baseTitle = "Odyssey - Deep Work";
+  //   let timeoutId;
+
+  //   const tick = () => {
+  //     if (!activeTimer) {
+  //       document.title = baseTitle;
+  //       return;
+  //     }
+
+  //     let seconds = 0;
+
+  //     const start = new Date(activeTimer.startedAt).getTime();
+  //     const baseElapsed = activeTimer.elapsedSeconds || 0;
+
+  //     if (activeTimer.status === "running") {
+  //       seconds = baseElapsed + (Date.now() - start) / 1000;
+  //     } else {
+  //       seconds = baseElapsed;
+  //     }
+
+  //     if (activeTimer.type === "pomodoro") {
+  //       seconds = Math.max(
+  //         (activeTimer.durationSeconds || 0) - seconds,
+  //         0
+  //       );
+  //     }
+
+  //     const formatted = formatTimer(seconds);
+
+  //     if (activeTimer.status === "paused") {
+  //       document.title = `⏸ ${formatted} – ${baseTitle}`;
+  //     } else if (activeTimer.type === "pomodoro") {
+  //       document.title = `${formatted} – Focus – ${baseTitle}`;
+  //     } else {
+  //       document.title = `${formatted} – Stopwatch – ${baseTitle}`;
+  //     }
+
+  //     // 🔥 self-adjusting scheduling
+  //     const delay = 1000 - (Date.now() % 1000);
+  //     timeoutId = setTimeout(tick, delay);
+  //   };
+
+  //   tick();
+
+  //   return () => clearTimeout(timeoutId);
+  // }, [activeTimer]);
   //==================================================
-    
 
   return (
     <div className="space-y-6 lg:space-y-8">
@@ -580,7 +655,7 @@ function SessionsPage({ user, semester, onSessionsChanged, isDark = false }) {
               >
                 Stopwatch
               </button>
-{/* 
+              {/* 
               <button
                 type="button"
                 onClick={handleStartSelected}
@@ -608,7 +683,7 @@ function SessionsPage({ user, semester, onSessionsChanged, isDark = false }) {
               </button>
 
 
-              
+
 
 
             </div>
@@ -941,7 +1016,7 @@ function SessionsPage({ user, semester, onSessionsChanged, isDark = false }) {
 
 
           <form onSubmit={handleSaveManual}
-           className="space-y-5">
+            className="space-y-5">
 
             {/* Session Name */}
             <div className="space-y-1.5">
@@ -1231,9 +1306,9 @@ function SessionsPage({ user, semester, onSessionsChanged, isDark = false }) {
                       <button
                         type="button"
                         onClick={() => {
-                          playPause()
+                          playDelete()
                           handleDeleteSession(session.id)
-                        
+
                         }}
                         // className={['rounded-xl px-3 py-1.5 text-sm font-medium transition hover:text-red-500', isDark ? 'text-slate-400 hover:bg-red-900/20' : 'text-slate-500 hover:bg-red-50'].join(' ')}
                         className={deleteButtonClass}
