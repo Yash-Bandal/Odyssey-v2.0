@@ -10,6 +10,7 @@ import GoalsPage from '../../pages/Goals'
 import RewardsPage from '../../pages/Rewards'
 import AnalyticsPage from '../../pages/Analytics'
 import SettingsPage from '../../pages/Settings'
+import ResetPassword from '../auth/ResetPassword'
 
 function AppShell({
   user,
@@ -290,8 +291,8 @@ function AppShell({
 
                 <div
                   className={`max-sm:hidden flex items-center gap-3 px-3 py-1.5 rounded-full border ${isDark
-                      ? 'bg-slate-800 border-slate-700'
-                      : 'bg-white border-slate-200'
+                    ? 'bg-slate-800 border-slate-700'
+                    : 'bg-white border-slate-200'
                     }`}
                 >
                   <svg
@@ -329,8 +330,8 @@ function AppShell({
                 <button
                   type="button"
                   className={`inline-flex items-center justify-center h-8 w-8 rounded-xl border shadow-sm ${isDark
-                      ? 'border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700'
-                      : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                    ? 'border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700'
+                    : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
                     }`}
                   onClick={() => setProfileMenuOpen((open) => !open)}
                 >
@@ -364,7 +365,7 @@ function AppShell({
                   </div>
                 )} */}
 
-                
+
                 {profileMenuOpen && (
                   <div
                     className={`absolute right-0 mt-3 w-64 rounded-2xl shadow-xl border overflow-hidden text-sm z-[2000]
@@ -501,20 +502,20 @@ function AppShell({
                   />
                 }
               />
-              
+
               <Route path="*" element={<Navigate to="/" replace />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
             </Routes>
           </div>
         </main>
 
-        
 
-        
+
+
       </div>
-      
+
     </div>
   )
 }
 
 export default AppShell
-
