@@ -36,6 +36,18 @@
             .limit(5000)
 
         if (error || !data) return null
+        const { data: existingRewards } = await supabase
+            .from("user_rewards")
+            .select("reward_key, unlock_count")
+            .eq("user_id", user.id)
+
+        const rewardsMap = new Map(
+            (existingRewards || []).map((row) => [
+                row.reward_key,
+                Number(row.unlock_count) || 0,
+            ])
+        )
+        
 
         const todayKey = toLocalDateKey(new Date())
         let todayMinutes = 0
@@ -86,16 +98,31 @@
             "100_day_streak": streakDays >= 100,
         }
 
-        const build = (def, unlocked) => ({
-            key: def.key,
-            title: def.title,
-            subtitle:
-                def.threshold
-                    ? `${def.threshold}+ minutes today`
-                    : def.subtitle,
-            unlocked: Boolean(unlocked),
-            unlockCount: unlocked ? 1 : 0,
-        })
+        // const build = (def, unlocked) => ({
+        //     key: def.key,
+        //     title: def.title,
+        //     subtitle:
+        //         def.threshold
+        //             ? `${def.threshold}+ minutes today`
+        //             : def.subtitle,
+        //     unlocked: Boolean(unlocked),
+        //     unlockCount: unlocked ? 1 : 0,
+        // })
+        const build = (def, unlocked) => {
+            const existingCount = rewardsMap.get(def.key) || 0
+
+            return {
+                key: def.key,
+                title: def.title,
+                subtitle:
+                    def.threshold
+                        ? `${def.threshold}+ minutes today`
+                        : def.subtitle,
+                unlocked: Boolean(unlocked),
+                unlockCount: existingCount,
+            }
+        }
+
 
         return {
             timing: dailyTimingDefs.map((def) =>
