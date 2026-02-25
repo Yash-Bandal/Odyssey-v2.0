@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import {playDelete } from "../utils/sound"
 import {
   ResponsiveContainer,
   AreaChart,
@@ -27,6 +28,10 @@ import RewLogo from "../assets/rewards/RewLogo.PNG";
 import { Plus, Check, Trash2, ListTodo } from "lucide-react"
 
 function DashboardPlaceholder({ user, semester, sessionsVersion, isDark = false }) {
+
+  const [trendView, setTrendView] = useState("week") // "week" | "month"
+
+
   const [summary, setSummary] = useState({
     todayMinutes: 0,
     weekMinutes: 0,
@@ -39,6 +44,21 @@ function DashboardPlaceholder({ user, semester, sessionsVersion, isDark = false 
     thisWeek: [0, 0, 0, 0, 0, 0, 0],
     lastWeek: [0, 0, 0, 0, 0, 0, 0],
     weekdayAvg: [0, 0, 0, 0, 0, 0, 0],
+
+    //============= study days card
+    semesterTotalHours: 0,
+    semesterStudiedHours: 0,
+    semesterRemainingHours: 0,
+    semesterRemainingDays: 0,
+    semesterRequiredDailyHours: 0,
+
+    //================================
+
+    //================ month data
+    thisMonth: [],
+    lastMonth: [],
+    //===============================
+
   })
   const [rewardBadges, setRewardBadges] = useState([])
   const [todoInput, setTodoInput] = useState('')
@@ -61,7 +81,41 @@ function DashboardPlaceholder({ user, semester, sessionsVersion, isDark = false 
         .eq('user_id', user.id)
         .eq('semester_id', semester.id)
         .order('start_time', { ascending: false })
-        .limit(500)
+        .limit(1000)
+        //change this limit if exceed, database has all data
+
+      // ================= SEMESTER PROGRESS Study days card =================
+
+      const semesterStart = new Date(semester.start_date)
+      const semesterEnd = new Date(semester.end_date)
+      const today = new Date()
+
+      const totalGoalHours = Number(semester.total_goal_hours) || 0
+
+
+      // total studied minutes so far (from all sessions)
+      let totalStudiedMinutes = 0
+      data.forEach((session) => {
+        totalStudiedMinutes += Number(session.duration_minutes) || 0
+      })
+
+      const totalStudiedHours = totalStudiedMinutes / 60
+      const remainingHours = Math.max(totalGoalHours - totalStudiedHours, 0)
+
+      // Remaining days
+      const oneDayMs = 1000 * 60 * 60 * 24
+      const remainingDays =
+        semesterEnd > today
+          ? Math.ceil((semesterEnd - today) / oneDayMs)
+          : 0
+
+      // Required daily pace from today
+      const requiredDailyHours =
+        remainingDays > 0
+          ? remainingHours / remainingDays
+          : 0
+
+          //=========================================================
 
       if (error || !data) {
         setSummary({
@@ -76,6 +130,9 @@ function DashboardPlaceholder({ user, semester, sessionsVersion, isDark = false 
           thisWeek: [0, 0, 0, 0, 0, 0, 0],
           lastWeek: [0, 0, 0, 0, 0, 0, 0],
           weekdayAvg: [0, 0, 0, 0, 0, 0, 0],
+
+
+
         })
         setRewardBadges([])
         return
@@ -175,6 +232,42 @@ function DashboardPlaceholder({ user, semester, sessionsVersion, isDark = false 
         return count > 0 ? Math.round(weekdayTotals[index] / count) : 0
       })
 
+
+
+      // ===== MONTH DATA =====
+
+      const thisMonth = []
+      const lastMonth = []
+
+      const nowDate = new Date()
+      const thisMonthStart = new Date(nowDate.getFullYear(), nowDate.getMonth(), 1)
+      const lastMonthStart = new Date(nowDate.getFullYear(), nowDate.getMonth() - 1, 1)
+      const lastMonthEnd = new Date(nowDate.getFullYear(), nowDate.getMonth(), 0)
+
+      const daysInThisMonth = new Date(
+        nowDate.getFullYear(),
+        nowDate.getMonth() + 1,
+        0
+      ).getDate()
+
+      for (let i = 0; i < daysInThisMonth; i++) {
+        const d1 = new Date(thisMonthStart)
+        d1.setDate(thisMonthStart.getDate() + i)
+        const k1 = toLocalDateKey(d1)
+        thisMonth.push(minutesForKey(k1))
+
+        const d2 = new Date(lastMonthStart)
+        d2.setDate(lastMonthStart.getDate() + i)
+        const k2 = toLocalDateKey(d2)
+        thisMonth.length === lastMonth.length
+          ? lastMonth.push(minutesForKey(k2))
+          : lastMonth.push(minutesForKey(k2))
+      }
+
+
+      //==============================================
+
+
       setSummary({
         todayMinutes,
         weekMinutes,
@@ -187,6 +280,20 @@ function DashboardPlaceholder({ user, semester, sessionsVersion, isDark = false 
         thisWeek,
         lastWeek,
         weekdayAvg,
+
+        //================== study days card
+        semesterTotalHours: totalGoalHours,
+        semesterStudiedHours: totalStudiedHours,
+        semesterRemainingHours: remainingHours,
+        semesterRemainingDays: remainingDays,
+        semesterRequiredDailyHours: requiredDailyHours,
+        //====================================
+
+
+        //============ Month data
+        thisMonth,
+        lastMonth,
+        //========================
       })
 
       const { data: existingRewards } = await supabase
@@ -262,15 +369,39 @@ function DashboardPlaceholder({ user, semester, sessionsVersion, isDark = false 
   const circleRadius = 18
   const circleCircumference = 2 * Math.PI * circleRadius
   const circleOffset = circleCircumference * (1 - progressFraction)
-  const trendChartData = useMemo(
-    () =>
-      WEEKDAY_LABELS.map((day, index) => ({
-        day,
-        thisWeek: summary.thisWeek[index] || 0,
-        lastWeek: summary.lastWeek[index] || 0,
-      })),
-    [summary.thisWeek, summary.lastWeek],
-  )
+  // const trendChartData = useMemo(
+  //   () =>
+  //     WEEKDAY_LABELS.map((day, index) => ({
+  //       day,
+  //       thisWeek: summary.thisWeek[index] || 0,
+  //       lastWeek: summary.lastWeek[index] || 0,
+  //     })),
+  //   [summary.thisWeek, summary.lastWeek],
+  // )
+
+  const trendChartData = useMemo(() => {
+    if (trendView === "week") {
+      return WEEKDAY_LABELS.map((day, index) => ({
+        label: day,
+        current: summary.thisWeek[index] || 0,
+        previous: summary.lastWeek[index] || 0,
+      }))
+    }
+
+    return summary.thisMonth.map((value, index) => ({
+      label: `Day ${index + 1}`,
+      current: summary.thisMonth[index] || 0,
+      previous: summary.lastMonth[index] || 0,
+    }))
+  }, [
+    trendView,
+    summary.thisWeek,
+    summary.lastWeek,
+    summary.thisMonth,
+    summary.lastMonth,
+  ])
+
+
   const dashboardCardClass = isDark
     ? 'rounded-3xl bg-slate-900 border border-slate-800 shadow-sm px-8 py-8'
     : 'rounded-3xl bg-white border border-slate-200 shadow-sm px-8 py-8'
@@ -318,6 +449,8 @@ function DashboardPlaceholder({ user, semester, sessionsVersion, isDark = false 
     [todoItems],
   )
 
+  // const remainingTodayHours = Math.max(dailyTargetHours - todayHours, 0)
+
   return (
     <div className="space-y-10 ">
 
@@ -364,36 +497,36 @@ function DashboardPlaceholder({ user, semester, sessionsVersion, isDark = false 
           {/* ===== GOALS ===== */}
           <div className={dashboardCardClass}>
 
-            <div className="flex items-center justify-between mb-6 relative">
-                
+            <div className="flex items-center justify-between mb-8 relative ">
+
               <h2 className={dashboardTitleClass}>
                 Daily Progress
               </h2>
 
-                          {/* {!isDark && (
+              {/* {!isDark && (
                           <img
                               src={StudyTimeImg}
                               alt="Study illustration"
                               className="w-32 h-auto opacity-80 absolute top-0 right-0 max-sm:top-10 max-sm:w-24"
                           />
                           )} */}
-                          <img
-                              src={StudyTimeImg}
-                              alt="Study time"
-                              className={[
-                                  "w-32 h-auto transition-opacity absolute top-0 right-0 max-sm:top-10 max-sm:w-24",
-                                  isDark ? "opacity-20" : "opacity-80"
-                              ].join(" ")}
-                          />
+              <img
+                src={StudyTimeImg}
+                alt="Study time"
+                className={[
+                  "w-32 h-auto transition-opacity absolute top-0 right-0 max-sm:top-10 max-sm:w-24",
+                  isDark ? "opacity-20" : "opacity-80"
+                ].join(" ")}
+              />
 
             </div>
 
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-10">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-10 sm:m-6">
 
               {/* BIG PROGRESS CIRCLE */}
-              <div className="relative h-36 w-36 flex items-center justify-center">
+              <div className="relative h-40 w-40 flex items-center justify-center">
 
-                <svg className="h-36 w-36 -rotate-90" viewBox="0 0 40 40">
+                <svg className="h-38 w-38 -rotate-90" viewBox="0 0 40 40">
 
                   <defs>
                     <linearGradient id="goalGradient" x1="0" y1="0" x2="1" y2="1">
@@ -426,17 +559,23 @@ function DashboardPlaceholder({ user, semester, sessionsVersion, isDark = false 
                     strokeDashoffset={circleOffset}
                     style={{
                       filter: "drop-shadow(0px 0px 8px rgba(0,224,96,0.35))",
+
+                      // filter: progressFraction >= 1
+                      //   ? "drop-shadow(0px 0px 14px rgba(0,224,96,0.6))"
+                      //   : progressFraction >= 0.5
+                      //     ? "drop-shadow(0px 0px 10px rgba(0,224,96,0.45))"
+                      //     : "drop-shadow(0px 0px 6px rgba(0,224,96,0.25))",
                     }}
                   />
 
                 </svg>
 
                 {/* Center content */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <div className="absolute  inset-0 flex flex-col items-center justify-center">
                   {/* <div className="text-3xl font-bold bg-gradient-to-r from-cyan-500 to-indigo-600 bg-clip-text text-transparent"> */}
                   <div
                     className={[
-                      'text-3xl font-bold',
+                      'text-3xl sm:text-4xl font-bold',
                       isDark ? 'text-white' : 'text-black',
                     ].join(' ')}
                   >
@@ -451,23 +590,38 @@ function DashboardPlaceholder({ user, semester, sessionsVersion, isDark = false 
 
 
               {/* TEXT DETAILS */}
-              <div className="space-y-4 flex-1">
+              <div className="space-y-4 flex-1">  
 
-                
-
-                <div className={`text-xl font-semibold ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
+                <div className={`text-xl sm:text-2xl font-semibold ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
                   {dailyTargetHours
                     ? `${todayHours.toFixed(1)}h / ${dailyTargetHours.toFixed(1)}h`
                     : 'Set semester goal'}
                 </div>
 
 
+                {/* {dailyTargetHours > 0 && progressFraction < 1 && (
+                  <div className={`text-sm ${dashboardMutedTextClass}`}>
+                    {remainingTodayHours.toFixed(1)}h remaining today
+                  </div>
+                )} */}
+
+
                 <div className={`text-sm ${dashboardMutedTextClass}`}>
-                  {dailyTargetHours
+                  {/* {dailyTargetHours
                     ? progressFraction >= 1
                       ? 'Daily target achieved '
                       : 'Keep logging sessions to reach 100%'
-                    : 'Daily target is derived from semester configuration.'}
+                    : 'Daily target is derived from semester configuration.'} */}
+                  {dailyTargetHours
+                    ? progressFraction >= 1
+                      ? "Target achieved. Extra hours compound."
+                      : progressFraction >= 0.7
+                        ? "You're close. Finish strong."
+                        : progressFraction >= 0.3
+                          ? "Good momentum. Stay locked in."
+                          : "Start strong. Momentum builds focus."
+                    : "Daily target is derived from semester configuration."
+                  }
                 </div>
 
                 <div className="grid grid-cols-2 gap-8 pt-4">
@@ -490,6 +644,8 @@ function DashboardPlaceholder({ user, semester, sessionsVersion, isDark = false 
                     </div>
                   </div>
 
+                  
+
                 </div>
               </div>
 
@@ -504,31 +660,27 @@ function DashboardPlaceholder({ user, semester, sessionsVersion, isDark = false 
           {/* ===== STUDY DAYS ===== */}
           <div className={dashboardCardClass}>
 
-            <div className="flex items-center justify-between mb-12 relative ">
+            <div className="flex items-center justify-between mb-10 relative ">
               <h2 className={dashboardTitleClass}>
                 Study Days
               </h2>
-                 {/* <img
-                    src={ActivityImg}
-                    alt="Study illustration"
-                    className="w-24 h-auto  absolute top-0 right-20 opacity-80 max-sm:top-0 max-sm:opacity-60 "
-                 /> */}
 
-                          <img
-                              src={ActivityImg}
-                              alt="Activity"
-                              className={[
-                                  "w-24 h-auto transition-opacity duration-300 bsolute top-0 right-20  max-sm:top-0 ",
-                                  isDark ? "opacity-20" : "opacity-80"
-                              ].join(" ")}
-                          />
+
+              <img
+                src={ActivityImg}
+                alt="Activity"
+                className={[
+                  "w-24 h-auto transition-opacity duration-300 absolute top-0 right-20  max-sm:top-0 ",
+                  isDark ? "opacity-20" : "opacity-70"
+                ].join(" ")}
+              />
 
               <span className="inline-flex items-center rounded-full bg-emerald-50 text-emerald-700 px-3 py-1 text-xs font-semibold">
                 On track
               </span>
             </div>
 
-            <div className="space-y-4 text-sm pb-2">
+            {/* <div className="space-y-4 text-sm pb-2">
 
               <div className=" flex justify-between">
                 <span className={dashboardMutedTextClass}>Active days</span>
@@ -546,7 +698,8 @@ function DashboardPlaceholder({ user, semester, sessionsVersion, isDark = false 
                   {formatHoursMinutes(summary.dailyAvgMinutes)}
                 </span>
               </div>
-{/*               
+              
+                            
           <div className="flex flex-wrap gap-2 pt-2">
             {Array.from({ length: 14 }).map((_, index) => (
               <span
@@ -561,10 +714,63 @@ function DashboardPlaceholder({ user, semester, sessionsVersion, isDark = false 
                 ].join(' ')}
               />
             ))}
-          </div> */}
+          </div>
+
+            </div> */}
+
+            <div className="space-y-4 text-sm ">
+
+              <div className="flex items-baseline justify-between">
+                <span className={dashboardMutedTextClass}>
+                  Semester Goal
+                </span>
+                <span className={dashboardStrongTextClass}>
+                  {summary.semesterTotalHours} h
+                </span>
+              </div>
+
+              <div className="flex items-baseline justify-between">
+                <span className={dashboardMutedTextClass}>
+                  Completed
+                </span>
+                <span className={dashboardStrongTextClass}>
+                  {summary.semesterStudiedHours.toFixed(1)} h
+                </span>
+              </div>
+
+              <div className="flex items-baseline justify-between">
+                <span className={dashboardMutedTextClass}>
+                  Remaining Hours
+                </span>
+                <span className={dashboardStrongTextClass}>
+                  {summary.semesterRemainingHours.toFixed(2)} h
+                </span>
+              </div>
+
+              <div className="flex items-baseline justify-between">
+                <span className={dashboardMutedTextClass}>
+                  Remaining Days
+                </span>
+                <span className={dashboardStrongTextClass}>
+                  {summary.semesterRemainingDays}
+                </span>
+              </div>
+
+              <div className="flex items-baseline justify-between border-t pt-4">
+                <span className={dashboardMutedTextClass}>
+                  Required Daily Pace
+                </span>
+                <span className="font-semibold text-sky-500">
+                  {summary.semesterRequiredDailyHours.toFixed(2)} h/day
+                </span>
+              </div>
 
             </div>
+
+            
           </div>
+
+          
 
           {/* ===== UPCOMING ===== */}
           {/* <div className="rounded-3xl bg-white border border-slate-200 shadow-sm px-8 py-8">
@@ -611,7 +817,7 @@ function DashboardPlaceholder({ user, semester, sessionsVersion, isDark = false 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
         {/* ===== STUDY TREND ===== */}
         <div className={dashboardCardClass}>
-          <div className="flex items-center justify-between mb-6">
+          {/* <div className="flex items-center justify-between mb-6">
             <h2 className={dashboardTitleClass}>
               Study Trend
             </h2>
@@ -626,7 +832,67 @@ function DashboardPlaceholder({ user, semester, sessionsVersion, isDark = false 
                 Last week
               </span>
             </div>
+
+            
+          </div> */}
+
+          <div className="flex flex-col gap-4 mb-6 sm:flex-row sm:items-center sm:justify-between">
+
+            {/* Title */}
+            <h2 className={dashboardTitleClass}>
+              Study Trend
+            </h2>
+
+            {/* Right Section */}
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
+
+              {/* Toggle */}
+              <div className="flex rounded-xl border overflow-hidden text-xs w-fit">
+                <button
+                  onClick={() => setTrendView("week")}
+                  className={`px-4 py-1 transition ${trendView === "week"
+                      ? "bg-sky-500 text-white"
+                      : isDark
+                        ? "bg-slate-800 text-slate-400"
+                        : "bg-slate-100 text-slate-600"
+                    }`}
+                >
+                  Week
+                </button>
+                <button
+                  onClick={() => setTrendView("month")}
+                  className={`px-4 py-1 transition ${trendView === "month"
+                      ? "bg-sky-500 text-white"
+                      : isDark
+                        ? "bg-slate-800 text-slate-400"
+                        : "bg-slate-100 text-slate-600"
+                    }`}
+                >
+                  Month
+                </button>
+              </div>
+
+              {/* Legend */}
+              <div
+                className={[
+                  "flex items-center gap-4 text-xs flex-wrap",
+                  dashboardMutedTextClass,
+                ].join(" ")}
+              >
+                <span className="flex items-center gap-2">
+                  <span className="h-2 w-4 rounded-full bg-sky-500" />
+                  Current
+                </span>
+                <span className="flex items-center gap-2">
+                  <span className="h-2 w-4 rounded-full bg-slate-300" />
+                  Previous
+                </span>
+              </div>
+
+            </div>
+
           </div>
+
 
           <div className={['h-56 rounded-2xl p-4', isDark ? 'border border-slate-800 bg-slate-950/50' : 'border border-slate-200'].join(' ')}>
             <ResponsiveContainer width="100%" height="100%">
@@ -642,21 +908,21 @@ function DashboardPlaceholder({ user, semester, sessionsVersion, isDark = false 
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#334155' : '#e2e8f0'} />
-                <XAxis dataKey="day" tick={{ fill: isDark ? '#cbd5e1' : '#64748b', fontSize: 12 }} axisLine={false} tickLine={false} />
+                <XAxis dataKey="label" tick={{ fill: isDark ? '#cbd5e1' : '#64748b', fontSize: 12 }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fill: isDark ? '#cbd5e1' : '#64748b', fontSize: 12 }} axisLine={false} tickLine={false} width={36} />
                 <Tooltip formatter={(value) => [`${value} min`, '']} />
                 <Area
                   type="monotone"
-                  dataKey="lastWeek"
-                  name="Last week"
+                  dataKey="previous"
+                  name="Last wee/month"
                   stroke="#94a3b8"
                   strokeWidth={2}
                   fill="url(#lastWeekFill)"
                 />
                 <Area
                   type="monotone"
-                  dataKey="thisWeek"
-                  name="This week"
+                  dataKey="current"
+                  name="This wee/month"
                   stroke="#0ea5e9"
                   strokeWidth={2.5}
                   fill="url(#thisWeekFill)"
@@ -1038,7 +1304,12 @@ function DashboardPlaceholder({ user, semester, sessionsVersion, isDark = false 
                 {/* Delete */}
                 <button
                   type="button"
-                  onClick={() => handleDeleteTodo(item.id)}
+                  onClick={() => {
+
+                    playDelete()
+                    handleDeleteTodo(item.id)
+                  }  
+                }
                   className="opacity-0 group-hover:opacity-100 transition text-slate-400 hover:text-red-500"
                 >
                   <Trash2 className="h-6 w-6" />
@@ -1059,7 +1330,7 @@ function DashboardPlaceholder({ user, semester, sessionsVersion, isDark = false 
   )
 }
 
-
+// Removed unused formatDuration utility
 
 
 export default DashboardPlaceholder
