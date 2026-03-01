@@ -29,6 +29,9 @@ import { Plus, Check, Trash2, ListTodo } from "lucide-react"
 
 function DashboardPlaceholder({ user, semester, sessionsVersion, isDark = false }) {
 
+
+  
+
   const [trendView, setTrendView] = useState("week") // "week" | "month"
 
 
@@ -146,7 +149,11 @@ function DashboardPlaceholder({ user, semester, sessionsVersion, isDark = false 
       let todayMinutes = 0
       let weekMinutes = 0
       let monthMinutes = 0
-      const pomodoroDayKeys = new Set()
+      
+      // const pomodoroDayKeys = new Set()
+      const activeDayKeys = new Set()
+
+
       const dayTotals = new Map() // key: 'YYYY-MM-DD' -> minutes
       const weekdayTotals = [0, 0, 0, 0, 0, 0, 0]
       const weekdayCounts = [0, 0, 0, 0, 0, 0, 0]
@@ -167,12 +174,20 @@ function DashboardPlaceholder({ user, semester, sessionsVersion, isDark = false 
           monthMinutes += duration
         }
 
-        if (session.type === 'pomodoro') {
-          const streakDateKey = toLocalDateKey(session.end_time || session.start_time)
-          if (streakDateKey) {
-            pomodoroDayKeys.add(streakDateKey)
-          }
+
+        //====================
+        // if (session.type === 'pomodoro') {
+        //   const streakDateKey = toLocalDateKey(session.end_time || session.start_time)
+        //   if (streakDateKey) {
+        //     pomodoroDayKeys.add(streakDateKey)
+        //   }
+        // }
+
+        const streakDateKey = toLocalDateKey(session.start_time)
+        if (streakDateKey) {
+          activeDayKeys.add(streakDateKey)
         }
+        //=========streak end
 
         dayTotals.set(key, (dayTotals.get(key) || 0) + duration)
         const sundayIndex = date.getDay()
@@ -181,18 +196,50 @@ function DashboardPlaceholder({ user, semester, sessionsVersion, isDark = false 
         weekdayCounts[mondayIndex] += 1
       })
 
+
+      //===============================
+      // let streakDays = 0
+      // if (pomodoroDayKeys.size > 0) {
+      //   const cursor = new Date()
+      //   for (; ;) {
+      //     const key = toLocalDateKey(cursor)
+      //     if (!pomodoroDayKeys.has(key)) {
+      //       break
+      //     }
+      //     streakDays += 1
+      //     cursor.setDate(cursor.getDate() - 1)
+      //   }
+      // }
+
       let streakDays = 0
-      if (pomodoroDayKeys.size > 0) {
+      if (activeDayKeys.size > 0) {
         const cursor = new Date()
         for (; ;) {
           const key = toLocalDateKey(cursor)
-          if (!pomodoroDayKeys.has(key)) {
-            break
-          }
+          if (!activeDayKeys.has(key)) break
           streakDays += 1
           cursor.setDate(cursor.getDate() - 1)
         }
       }
+
+
+      // let streakDays = 0
+
+      // // const today = new Date()
+      // today.setHours(0, 0, 0, 0)
+
+      // for (let i = 0; ; i++) {
+      //   const date = new Date(today)
+      //   date.setDate(today.getDate() - i)
+
+      //   const key = toLocalDateKey(date)
+      //   const minutes = dayTotals.get(key) || 0
+
+      //   if (minutes <= 0) break
+
+      //   streakDays += 1
+      // }
+      //==============================
 
       const activeDays = dayTotals.size
       let dailyAvgMinutes = 0
