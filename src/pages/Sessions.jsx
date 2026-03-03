@@ -3,13 +3,16 @@ import { supabase } from '../supabaseClient'
 import { StatCard, SectionCard } from './AppPages'
 import successSound from '../assets/session-success.mp3'
 import ClockImg from '../assets/Clock.png';
-
+import DatePicker from "../components/ui/DatePicker"
 import { playClick, playPause, playDropDown ,playDelete} from "../utils/sound"
 import {
-  Trash2,
+  Trash2,ChevronDown 
 } from "lucide-react";
 
 function formatTimer(totalSeconds) {
+
+
+
   const safe = Number.isFinite(totalSeconds) && totalSeconds > 0 ? totalSeconds : 0
   const seconds = Math.floor(safe)
   const hours = Math.floor(seconds / 3600)
@@ -531,6 +534,20 @@ function SessionsPage({ user, semester, onSessionsChanged, isDark = false }) {
 
 
 
+
+  //====================Load sessions========
+  const INITIAL_VISIBLE = 4
+  const LOAD_MORE_COUNT = 10
+
+  const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE)
+
+  useEffect(() => {
+    setVisibleCount(INITIAL_VISIBLE)
+  }, [filters, filteredSessions.length])
+  //================================
+
+
+
   //======================== Title Timer (Only render on sessionpage not other) ===================
   useEffect(() => {
     if (typeof document === "undefined") return;
@@ -812,7 +829,7 @@ function SessionsPage({ user, semester, onSessionsChanged, isDark = false }) {
                     placeholder="Session name"
                   />
 
-                  <select
+                  {/* <select
                     value={activeTimer.subjectId}
                     onChange={(event) =>
                       handleUpdateActive('subjectId', event.target.value)
@@ -826,7 +843,42 @@ function SessionsPage({ user, semester, onSessionsChanged, isDark = false }) {
                         {subject.name}
                       </option>
                     ))}
-                  </select>
+
+                    
+                  </select> */}
+{/* select sub inside timer running */}
+                  <div className="relative">
+                    <select
+                      value={activeTimer.subjectId}
+                      onChange={(event) =>
+                        handleUpdateActive("subjectId", event.target.value)
+                      }
+                      className={[
+                        "w-full appearance-none rounded-2xl border px-3 pr-10 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-sky-500 transition",
+                        isDark
+                          ? "bg-slate-900 border-slate-800 text-slate-200"
+                          : "bg-white border-slate-200 text-slate-700"
+                      ].join(" ")}
+                    >
+                      <option value="">Select subject</option>
+                      {subjects.map((subject) => (
+                        <option key={subject.id} value={subject.id}>
+                          {subject.name}
+                        </option>
+                      ))}
+                    </select>
+
+                    {/* Custom Arrow */}
+                    <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+                      <ChevronDown
+                        size={16}
+                        className={isDark ? "text-slate-400" : "text-slate-500"}
+                      />
+                    </div>
+                  </div>
+
+
+
                 </div>
 
                 <textarea
@@ -843,19 +895,18 @@ function SessionsPage({ user, semester, onSessionsChanged, isDark = false }) {
           </div>
 
 
-          {timerMode === 'pomodoro' && (
+          {/* {timerMode === 'pomodoro' && (
             <div className="pt-6">
 
               <div className={['shadow-sm p-6 space-y-6', sessionsSubCardClass].join(' ')}>
 
-                {/* SECTION TITLE */}
+         
                 <div className={['text-sm font-semibold', sessionsTitleTextClass].join(' ')}>
                   Pomodoro Settings
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
 
-                  {/* Pomodoro Length */}
                   <div className="space-y-3">
                     <div className={['text-xs font-medium uppercase tracking-wide', isDark ? 'text-slate-300' : 'text-slate-600'].join(' ')}>
                       Pomodoro length
@@ -912,7 +963,6 @@ function SessionsPage({ user, semester, onSessionsChanged, isDark = false }) {
                     </div>
                   </div>
 
-                  {/* Short Break */}
                   <div className="space-y-3">
                     <div className={['text-xs font-medium uppercase tracking-wide', isDark ? 'text-slate-300' : 'text-slate-600'].join(' ')}>
                       Short break
@@ -935,7 +985,7 @@ function SessionsPage({ user, semester, onSessionsChanged, isDark = false }) {
                     </div>
                   </div>
 
-                  {/* Long Break */}
+         
                   <div className="space-y-3">
                     <div className={['text-xs font-medium uppercase tracking-wide', isDark ? 'text-slate-300' : 'text-slate-600'].join(' ')}>
                       Long break
@@ -958,7 +1008,7 @@ function SessionsPage({ user, semester, onSessionsChanged, isDark = false }) {
                     </div>
                   </div>
 
-                  {/* Long Break Interval */}
+           
                   <div className="space-y-3">
                     <div className={['text-xs font-medium uppercase tracking-wide', isDark ? 'text-slate-300' : 'text-slate-600'].join(' ')}>
                       Long break every
@@ -983,6 +1033,182 @@ function SessionsPage({ user, semester, onSessionsChanged, isDark = false }) {
 
                 </div>
 
+              </div>
+            </div>
+          )} */}
+
+          {timerMode === 'pomodoro' && (
+            <div className="pt-8">
+              <div className={['rounded-3xl border p-8 space-y-8 shadow-sm', sessionsSubCardClass].join(' ')}>
+
+                {/* SECTION HEADER */}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className={['text-lg font-semibold', sessionsTitleTextClass].join(' ')}>
+                      Pomodoro Settings
+                    </h3>
+                    <p className={['text-sm mt-1', sessionsMutedTextClass].join(' ')}>
+                      Configure your focus and break rhythm
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+
+                  {/* ========================= */}
+                  {/* POMODORO LENGTH (PRIMARY) */}
+                  {/* ========================= */}
+                  <div className="xl:col-span-2 space-y-6">
+
+                    <div>
+                      <div className={['text-xs font-semibold uppercase tracking-wider mb-3', sessionsMutedTextClass].join(' ')}>
+                        Focus Duration
+                      </div>
+
+                      {/* Presets */}
+                      <div className="flex flex-wrap gap-3">
+                        {['25', '60', '90','180'].map((value) => (
+                        // {['25', '45', '90','120', '180'].map((value) => (
+                          <button
+                            key={value}
+                            type="button"
+                            onClick={() => setPomodoroPreset(value)}
+                            className={[
+                              'rounded-2xl px-4 py-2 text-sm font-semibold border transition-all duration-200',
+                              pomodoroPreset === value
+                                ? 'bg-sky-500 text-white border-sky-500  scale-[1.02]'
+                                : isDark
+                                  ? 'bg-slate-900 text-slate-200 border-slate-900 hover:bg-slate-800'
+                                  : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100',
+                            ].join(' ')}
+                          >
+                            {value} min
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Custom */}
+                      <div className="flex items-center gap-3 pt-4">
+                        <button
+                          type="button"
+                          onClick={() => setPomodoroPreset('custom')}
+                          className={[
+                            'rounded-2xl px-4 py-2 text-sm font-semibold border transition-all duration-200',
+                            pomodoroPreset === 'custom'
+                              ? 'bg-sky-500 text-white border-sky-500 shadow-md'
+                              : isDark
+                                ? 'bg-slate-900 text-slate-200 border-slate-700 hover:bg-slate-800'
+                                : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100',
+                          ].join(' ')}
+                        >
+                          Custom
+                        </button>
+
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="number"
+                            min="1"
+                            max="300"
+                            value={customMinutes}
+                            onChange={(e) => {
+                              setCustomMinutes(e.target.value)
+                              setPomodoroPreset('custom')
+                            }}
+                            className={[
+                              'w-24 rounded-2xl border px-4 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-sky-500 transition',
+                              sessionsInputClass
+                            ].join(' ')}
+                          />
+                          <span className={['text-sm', sessionsMutedTextClass].join(' ')}>
+                            minutes
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ========================= */}
+                  {/* BREAK SETTINGS (SECONDARY) */}
+                  {/* ========================= */}
+                  {/* <div className="space-y-2"> */}
+
+                    {/* Short Break */}
+                    {/* <div className="space-y-2">
+                      <div className={['text-xs font-semibold uppercase tracking-wider', sessionsMutedTextClass].join(' ')}>
+                        Short Break
+                      </div>
+                      <input
+                        type="number"
+                        min="1"
+                        max="60"
+                        value={settings.shortBreakMinutes}
+                        onChange={(e) =>
+                          setSettings((prev) => ({
+                            ...prev,
+                            shortBreakMinutes: Number(e.target.value) || 5,
+                          }))
+                        }
+                        className={[
+                          'w-full rounded-2xl border px-4 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-sky-500 transition',
+                          sessionsInputClass
+                        ].join(' ')}
+                      />
+                    </div> */}
+
+                    {/* Long Break */}
+                    {/* <div className="space-y-2">
+                      <div className={['text-xs font-semibold uppercase tracking-wider', sessionsMutedTextClass].join(' ')}>
+                        Long Break
+                      </div>
+                      <input
+                        type="number"
+                        min="5"
+                        max="90"
+                        value={settings.longBreakMinutes}
+                        onChange={(e) =>
+                          setSettings((prev) => ({
+                            ...prev,
+                            longBreakMinutes: Number(e.target.value) || 15,
+                          }))
+                        }
+                        className={[
+                          'w-full rounded-2xl border px-4 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-sky-500 transition',
+                          sessionsInputClass
+                        ].join(' ')}
+                      />
+                    </div> */}
+
+                    {/* Long Break Interval */}
+                    {/* <div className="space-y-2">
+                      <div className={['text-xs font-semibold uppercase tracking-wider', sessionsMutedTextClass].join(' ')}>
+                        Long Break Every
+                      </div>
+                      <input
+                        type="number"
+                        min="2"
+                        max="12"
+                        value={settings.longBreakInterval}
+                        onChange={(e) =>
+                          setSettings((prev) => ({
+                            ...prev,
+                            longBreakInterval: Number(e.target.value) || 4,
+                          }))
+                        }
+                        className={[
+                          'w-full rounded-2xl border px-4 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-sky-500 transition',
+                          sessionsInputClass
+                        ].join(' ')}
+                      />
+                      <p className={['text-xs mt-1', sessionsMutedTextClass].join(' ')}>
+                        After this many focus sessions
+                      </p>
+                    </div> */}
+
+                  {/* </div> */}
+
+
+                  
+                </div>
               </div>
             </div>
           )}
@@ -1028,12 +1254,54 @@ function SessionsPage({ user, semester, onSessionsChanged, isDark = false }) {
                 value={manualForm.name}
                 onChange={(event) => handleManualChange('name', event.target.value)}
                 className={['w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500', sessionsInputClass].join(' ')}
-                placeholder="Deep work â€“ Algorithms"
+                placeholder="Deep work - Algorithms"
               />
             </div>
 
             {/* Subject */}
+
             <div className="space-y-1.5">
+              <label
+                className={[
+                  "text-xs font-medium",
+                  isDark ? "text-slate-300" : "text-slate-600"
+                ].join(" ")}
+              >
+                Subject
+              </label>
+
+              <div className="relative">
+                <select
+                  value={manualForm.subjectId}
+                  onChange={(event) => {
+                    playDropDown()
+                    handleManualChange("subjectId", event.target.value)
+                  }}
+                  className={[
+                    "w-full appearance-none rounded-xl border px-3 pr-10 py-2 text-sm transition focus:outline-none focus:ring-2 focus:ring-sky-500",
+                    isDark
+                      ? "bg-slate-900 border-slate-800 text-slate-200 hover:bg-slate-800"
+                      : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
+                  ].join(" ")}
+                >
+                  <option value="">Select subject</option>
+                  {subjects.map((subject) => (
+                    <option key={subject.id} value={subject.id}>
+                      {subject.name}
+                    </option>
+                  ))}
+                </select>
+
+                {/* Custom Arrow */}
+                <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+                  <ChevronDown
+                    size={16}
+                    className={isDark ? "text-slate-400" : "text-slate-500"}
+                  />
+                </div>
+              </div>
+            </div>
+            {/* <div className="space-y-1.5">
               <label className={['text-xs font-medium', isDark ? 'text-slate-300' : 'text-slate-600'].join(' ')}>
                 Subject
               </label>
@@ -1054,7 +1322,7 @@ function SessionsPage({ user, semester, onSessionsChanged, isDark = false }) {
                   </option>
                 ))}
               </select>
-            </div>
+            </div> */}
 
             {/* Time Section */}
             <div className={['rounded-xl border p-4 space-y-5', isDark ? 'bg-slate-800/70 border-slate-700' : 'bg-slate-50 border-slate-200'].join(' ')}>
@@ -1066,7 +1334,7 @@ function SessionsPage({ user, semester, onSessionsChanged, isDark = false }) {
               {/* Date */}
               <div className="space-y-1.5">
                 <label className={['text-[11px]', sessionsMutedTextClass].join(' ')}>Date</label>
-                <input
+                {/* <input
                   type="date"
                   value={manualForm.startTime?.split('T')[0] || ''}
                   onChange={(event) => {
@@ -1077,7 +1345,26 @@ function SessionsPage({ user, semester, onSessionsChanged, isDark = false }) {
                     handleManualChange('startTime', `${date}T${startTime}`)
                     handleManualChange('endTime', `${date}T${endTime}`)
                   }}
-                  className={['w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500', sessionsInputClass].join(' ')}
+                  // className={['w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500', sessionsInputClass].join(' ')}
+                  className={[
+                    'w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500',
+                    sessionsInputClass,
+                    isDark ? 'dark-date' : ''
+                  ].join(' ')}
+                /> */}
+
+                <DatePicker
+                  value={manualForm.startTime?.split("T")[0] || ""}
+                  isDark={isDark}
+                  onChange={(date) => {
+                    const startTime =
+                      manualForm.startTime?.split("T")[1] || "00:00"
+                    const endTime =
+                      manualForm.endTime?.split("T")[1] || "00:00"
+
+                    handleManualChange("startTime", `${date}T${startTime}`)
+                    handleManualChange("endTime", `${date}T${endTime}`)
+                  }}
                 />
               </div>
 
@@ -1175,7 +1462,7 @@ function SessionsPage({ user, semester, onSessionsChanged, isDark = false }) {
 
       </div>
 
-      <div className={['shadow-sm p-6 flex flex-col gap-6', sessionsCardClass].join(' ')}>
+      <div className={['shadow-sm p-6 flex flex-col gap-6 ', sessionsCardClass].join(' ')}>
 
         {/* HEADER */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
@@ -1256,7 +1543,8 @@ function SessionsPage({ user, semester, onSessionsChanged, isDark = false }) {
           ) : (
             <div className={['divide-y', isDark ? 'divide-slate-800' : 'divide-slate-100'].join(' ')}>
 
-              {filteredSessions.map((session) => {
+              {/* {filteredSessions.map((session) => { */}
+                  {filteredSessions.slice(0, visibleCount).map((session) => {
                 const date = new Date(session.start_time)
                 const durationMinutes = Number(session.duration_minutes) || 0
 
@@ -1318,9 +1606,44 @@ function SessionsPage({ user, semester, onSessionsChanged, isDark = false }) {
                       </button>
 
                     </div>
+
+                    
                   </div>
                 )
               })}
+
+{/* show sessions button */}
+                  {filteredSessions.length > INITIAL_VISIBLE && (
+                    <div className="flex justify-center py-4 px-4">
+                      {visibleCount < filteredSessions.length ? (
+                        <button
+                          onClick={() => setVisibleCount(prev => prev + LOAD_MORE_COUNT)}
+                          className={[
+                            "rounded-2xl px-5 py-2 text-sm font-medium transition",
+                            isDark
+                              ? "bg-slate-800 text-slate-200 hover:bg-slate-700"
+                              : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                          ].join(" ")}
+                        >
+                          Show more
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => setVisibleCount(INITIAL_VISIBLE)}
+                          className={[
+                            "rounded-2xl px-5 py-2 text-sm font-medium transition",
+                            isDark
+                              ? "bg-slate-800 text-slate-200 hover:bg-slate-700"
+                              : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                          ].join(" ")}
+                        >
+                          Show less
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+
 
             </div>
           )}
