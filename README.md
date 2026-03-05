@@ -39,30 +39,101 @@ Odyssey is a React + Vite + Tailwind + Supabase study planning app for semester-
 ## Project Structure
 ```text
 Odyssey-v2.0/
-  public/
-  src/
-    assets/                 # images/audio
-    components/
-      analytics/            # Analytics UI components
-      auth/                 # Auth screens + semester setup wizard
-      dashboard/            # Dashboard UI components
-      goals/                # Goals UI components
-      layout/               # App shell and navigation
-      rewards/              # Rewards UI components
-      sessions/             # Sessions UI components
-      ui/                   # Shared inputs/widgets (e.g. DatePicker)
-    constants/              # app constants (navigation, rewards, analytics labels)
-    hooks/                  # custom hooks (e.g. semester calculations)
-    pages/                  # route-level page orchestrators
-    services/               # service clients (legacy/alternate supabase client path exists)
-    utils/                  # utility helpers (date, sound, reward engine)
-    AppRoot.jsx             # auth/session bootstrap and app gatekeeping
-    main.jsx                # app entry
-    supabaseClient.js       # primary Supabase client
-  .env                      # local env vars (not committed)
-  package.json
-  tailwind.config.js
-  vite.config.js
+│
+├── public/
+│   ├── image.png
+│   ├── vite.svg
+│   └── _redirects
+│
+├── src/
+│   │
+│   ├── App.css
+│   ├── App.jsx
+│   ├── AppRoot.jsx
+│   ├── index.css
+│   ├── main.jsx
+│   └── supabaseClient.js
+│
+│   ├── assets/                     # Images, audio, reward badges
+│
+│   ├── components/
+│   │
+│   │   ├── analytics/              # Analytics UI components
+│   │   │   ├── CumulativeHoursCard.jsx
+│   │   │   ├── Last30DaysCard.jsx
+│   │   │   ├── SessionTypeMixCard.jsx
+│   │   │   ├── StudyHeatmap.jsx
+│   │   │   ├── TopStats.jsx
+│   │   │   └── YearlyStudyHoursCard.jsx
+│   │
+│   │   ├── auth/                   # Authentication + onboarding
+│   │   │   ├── AuthScreen.jsx
+│   │   │   ├── ResetPassword.jsx
+│   │   │   └── SemesterSetupWizard.jsx
+│   │
+│   │   ├── dashboard/              # Dashboard UI widgets
+│   │   │   ├── DailyProgressCard.jsx
+│   │   │   ├── QuickTodoCard.jsx
+│   │   │   ├── RewardsSection.jsx
+│   │   │   ├── StudyDaysCard.jsx
+│   │   │   ├── StudyTrendCard.jsx
+│   │   │   ├── TopStats.jsx
+│   │   │   └── WeekdayConsistencyCard.jsx
+│   │
+│   │   ├── goals/                  # Semester planning components
+│   │   │   ├── GoalsHeader.jsx
+│   │   │   ├── GoalsNotesCard.jsx
+│   │   │   ├── SemesterPlanningCard.jsx
+│   │   │   └── SubjectsCard.jsx
+│   │
+│   │   ├── layout/                 # App shell and routing layout
+│   │   │   └── AppShell.jsx
+│   │
+│   │   ├── rewards/                # Rewards UI
+│   │   │   ├── RewardCard.jsx
+│   │   │   ├── RewardHeader.jsx
+│   │   │   └── RewardSection.jsx
+│   │
+│   │   ├── sessions/               # Study session features
+│   │   │   ├── ActiveTimerPanel.jsx
+│   │   │   ├── ManualSessionForm.jsx
+│   │   │   ├── PomodoroSettingsPanel.jsx
+│   │   │   └── SessionHistory.jsx
+│   │
+│   │   └── ui/                     # Shared UI components
+│   │       └── DatePicker.jsx
+│
+│   ├── constants/                  # Static config/constants
+│   │   ├── analytics.js
+│   │   ├── navigation.js
+│   │   └── rewards.js
+│
+│   ├── hooks/                      # Custom React hooks
+│   │   ├── useRewardEngine.js
+│   │   └── useSemesterCalculations.js
+│
+│   ├── pages/                      # Route-level page controllers
+│   │   ├── Analytics.jsx
+│   │   ├── AppPages.jsx
+│   │   ├── Calendar.jsx
+│   │   ├── Dashboard.jsx
+│   │   ├── Goals.jsx
+│   │   ├── Rewards.jsx
+│   │   ├── Sessions.jsx
+│   │   └── Settings.jsx
+|   |
+│   └── utils/                      # Helper utilities
+│       ├── date.js
+│       ├── rewardEngine.js
+│       └── sound.js
+│
+├── eslint.config.js
+├── index.html
+├── package.json
+├── package-lock.json
+├── postcss.config.js
+├── tailwind.config.js
+└── vite.config.js
 ```
 
 ## App Routing
