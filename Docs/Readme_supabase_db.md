@@ -7,6 +7,11 @@ Each table restricts access so users can **only read and modify their own data**
 
 # 1. Tables
 
+<div align = "center">
+  <img src = "https://github.com/Yash-Bandal/Odyssey-v2.0/blob/7906c5f9791eecf4a960b0109ccb15e74ac486d5/Docs/Tables.png" width="720">
+ </div>
+
+  
 ## 1.1 `semesters`
 
 Stores semester planning information for a user.
@@ -407,3 +412,91 @@ The backend follows these security rules:
 * Cascading deletes remove related data when a user or semester is deleted
 
 This ensures **users can only access their own academic data, sessions, and rewards**.
+
+
+<br>
+
+---
+
+# Tables SQL
+
+
+---
+>[!warning]
+>-  This schema is for context only and is not meant to be run.
+>- Table order and constraints may not be valid for execution.
+---
+
+```sql
+
+
+
+CREATE TABLE public.daily_journal (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  date_key text NOT NULL,
+  note text,
+  mood text,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT daily_journal_pkey PRIMARY KEY (id)
+);
+
+
+CREATE TABLE public.semesters (
+  id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  start_date date NOT NULL,
+  end_date date NOT NULL,
+  total_goal_hours numeric NOT NULL,
+  total_study_days integer NOT NULL,
+  daily_required_hours numeric NOT NULL,
+  weekly_required_hours numeric NOT NULL,
+  inserted_at timestamp with time zone DEFAULT now(),
+  user_id uuid,
+  CONSTRAINT semesters_pkey PRIMARY KEY (id),
+  CONSTRAINT semesters_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
+
+
+CREATE TABLE public.sessions (
+  id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  user_id uuid NOT NULL,
+  semester_id bigint NOT NULL,
+  subject_id bigint,
+  name text,
+  type text NOT NULL,
+  start_time timestamp with time zone NOT NULL,
+  end_time timestamp with time zone,
+  duration_minutes numeric NOT NULL,
+  notes text,
+  inserted_at timestamp with time zone DEFAULT timezone('utc'::text, now()),
+  CONSTRAINT sessions_pkey PRIMARY KEY (id),
+  CONSTRAINT sessions_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
+  CONSTRAINT sessions_semester_id_fkey FOREIGN KEY (semester_id) REFERENCES public.semesters(id),
+  CONSTRAINT sessions_subject_id_fkey FOREIGN KEY (subject_id) REFERENCES public.subjects(id)
+);
+
+
+CREATE TABLE public.subjects (
+  id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  semester_id bigint NOT NULL,
+  name text NOT NULL,
+  target_hours numeric NOT NULL,
+  weight numeric,
+  inserted_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT subjects_pkey PRIMARY KEY (id),
+  CONSTRAINT subjects_semester_id_fkey FOREIGN KEY (semester_id) REFERENCES public.semesters(id)
+);
+
+
+CREATE TABLE public.user_rewards (
+  id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  user_id uuid NOT NULL,
+  reward_key text NOT NULL,
+  unlock_count integer NOT NULL DEFAULT 0,
+  last_unlocked_date date,
+  inserted_at timestamp with time zone DEFAULT timezone('utc'::text, now()),
+  CONSTRAINT user_rewards_pkey PRIMARY KEY (id),
+  CONSTRAINT user_rewards_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
+```
