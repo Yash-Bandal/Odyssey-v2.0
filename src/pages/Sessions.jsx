@@ -1,13 +1,11 @@
-import { useEffect, useMemo, useState, useRef } from 'react'
+﻿import { useEffect, useState, useRef } from 'react'
 import { supabase } from '../supabaseClient'
-import { StatCard, SectionCard } from './AppPages'
 import successSound from '../assets/session-success.mp3'
 import ClockImg from '../assets/Clock.png';
-import DatePicker from "../components/ui/DatePicker"
-import { playClick, playPause, playDropDown ,playDelete} from "../utils/sound"
-import {
-  Trash2,ChevronDown 
-} from "lucide-react";
+import ActiveTimerPanel from '../components/sessions/ActiveTimerPanel'
+import PomodoroSettingsPanel from '../components/sessions/PomodoroSettingsPanel'
+import ManualSessionForm from '../components/sessions/ManualSessionForm'
+import SessionHistory from '../components/sessions/SessionHistory'
 
 function formatTimer(totalSeconds) {
 
@@ -505,7 +503,7 @@ function SessionsPage({ user, semester, onSessionsChanged, isDark = false }) {
     if (activeTimer.status !== 'running') return
     if (remaining === null || remaining > 0) return
 
-    // 🔒 Prevent duplicate completion
+    // ?? Prevent duplicate completion
     if (hasCompletedRef.current) return
 
     hasCompletedRef.current = true
@@ -564,7 +562,7 @@ function SessionsPage({ user, semester, onSessionsChanged, isDark = false }) {
     const formatted = formatTimer(seconds);
 
     if (activeTimer.status === "paused") {
-      // document.title = `⏸ ${formatted} – ${baseTitle}`;
+      // document.title = `? ${formatted} – ${baseTitle}`;
       document.title = `Paused ${formatted} `;
       return;
     }
@@ -609,14 +607,14 @@ function SessionsPage({ user, semester, onSessionsChanged, isDark = false }) {
   //     const formatted = formatTimer(seconds);
 
   //     if (activeTimer.status === "paused") {
-  //       document.title = `⏸ ${formatted} – ${baseTitle}`;
+  //       document.title = `? ${formatted} – ${baseTitle}`;
   //     } else if (activeTimer.type === "pomodoro") {
   //       document.title = `${formatted} – Focus – ${baseTitle}`;
   //     } else {
   //       document.title = `${formatted} – Stopwatch – ${baseTitle}`;
   //     }
 
-  //     // 🔥 self-adjusting scheduling
+  //     // ?? self-adjusting scheduling
   //     const delay = 1000 - (Date.now() % 1000);
   //     timeoutId = setTimeout(tick, delay);
   //   };
@@ -630,1030 +628,81 @@ function SessionsPage({ user, semester, onSessionsChanged, isDark = false }) {
   return (
     <div className="space-y-6 lg:space-y-8">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
-        <div className={['lg:col-span-2 px-5 py-5 sm:px-7 sm:py-6 flex flex-col gap-5', sessionsCardClass].join(' ')}>
+        <div className="lg:col-span-2">
+          <ActiveTimerPanel
+            isDark={isDark}
+            sessionsCardClass={sessionsCardClass}
+            sessionsSubCardClass={sessionsSubCardClass}
+            sessionsSoftCardClass={sessionsSoftCardClass}
+            sessionsInputClass={sessionsInputClass}
+            sessionsMutedTextClass={sessionsMutedTextClass}
+            sessionsTitleTextClass={sessionsTitleTextClass}
+            timerMode={timerMode}
+            handleModeSelect={handleModeSelect}
+            activeTimer={activeTimer}
+            handleCompleteTimer={handleCompleteTimer}
+            formatTimer={formatTimer}
+            mainTimerSeconds={mainTimerSeconds}
+            handlePauseResume={handlePauseResume}
+            handleStartSelected={handleStartSelected}
+            handleCancelTimer={handleCancelTimer}
+            timerError={timerError}
+            handleUpdateActive={handleUpdateActive}
+            subjects={subjects}
+          />
 
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h2 className={['text-sm font-semibold tracking-tight', sessionsTitleTextClass].join(' ')}>
-                Active timer
-              </h2>
-              <p className={['text-[11px] mt-1', sessionsMutedTextClass].join(' ')}>
-                Track deep work blocks with Pomodoro or a simple stopwatch.
-              </p>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => handleModeSelect('pomodoro')}
-                className={[
-                  'inline-flex items-center rounded-xl border px-3 py-2 text-[11px] font-medium transition',
-                  timerMode === 'pomodoro'
-                    ? 'border-sky-500 bg-sky-500 text-white shadow-sm'
-                    : isDark
-                      ? 'border-slate-700 bg-slate-900 text-slate-200 hover:bg-slate-800'
-                      : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100',
-                ].join(' ')}
-              >
-                Pomodoro
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleModeSelect('stopwatch')}
-                className={[
-                  'inline-flex items-center rounded-xl border px-3 py-2 text-[11px] font-medium transition',
-                  timerMode === 'stopwatch'
-                    ? 'border-sky-500 bg-sky-500 text-white shadow-sm'
-                    : isDark
-                      ? 'border-slate-700 bg-slate-900 text-slate-200 hover:bg-slate-800'
-                      : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100',
-                ].join(' ')}
-              >
-                Stopwatch
-              </button>
-              {/* 
-              <button
-                type="button"
-                onClick={handleStartSelected}
-                className="inline-flex items-center rounded-xl bg-green-500 text-white px-3 py-1.5 text-[11px] font-semibold hover:bg-green-600 shadow-sm transition"
-              >
-                Start
-              </button> */}
-
-              <button
-                type="button"
-                // onClick={handleCompleteTimer}
-                onClick={() => {
-                  playPause()
-                  handleCompleteTimer()
-                }}
-                disabled={!activeTimer}
-                className={[
-                  'inline-flex items-center rounded-xl bg-green-500 text-white px-3 py-1.5 text-[11px] font-semibold hover:bg-green-600 shadow-sm transition',
-                  activeTimer
-                    ? 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-sm'
-                    : 'bg-emerald-200 text-black  cursor-not-allowed',
-                ].join(' ')}
-              >
-                Save session
-              </button>
-
-
-
-
-
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-6">
-
-            {/* TIMER SURFACE â€” FULL WIDTH */}
-            <div className={['px-8 py-10 shadow-sm flex flex-col items-center justify-center gap-4', sessionsSubCardClass].join(' ')}>
-
-              <div className={['text-[11px] uppercase tracking-[0.18em]', sessionsMutedTextClass].join(' ')}>
-                {timerMode === 'pomodoro' ? 'Pomodoro timer' : 'Stopwatch'}
-              </div>
-
-              <div className={['text-5xl sm:text-6xl font-semibold tracking-tight tabular-nums', sessionsTitleTextClass].join(' ')}>
-                {formatTimer(mainTimerSeconds)}
-              </div>
-
-              <div className={['text-sm', sessionsMutedTextClass].join(' ')}>
-                {activeTimer
-                  ? activeTimer.status === 'running'
-                    ? timerMode === 'pomodoro'
-                      ? 'Counting down'
-                      : 'Counting up'
-                    : 'Paused'
-                  : 'Ready'}
-              </div>
-
-              <div className="flex flex-wrap gap-3 pt-4 w-full max-w-md">
-                <button
-                  type="button"
-                  // onClick={handlePauseResume}
-                  onClick={() => {
-                    playPause()
-                    handlePauseResume()
-                  }}
-                  disabled={!activeTimer}
-                  className={[
-                    'flex-1 inline-flex items-center justify-center rounded-2xl px-4 py-3 text-sm font-semibold transition',
-                    activeTimer
-                      ? isDark
-                        ? 'bg-slate-800 text-slate-100 hover:bg-slate-700'
-                        : 'bg-slate-100 text-slate-800 hover:bg-slate-200'
-                      : isDark
-                        ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
-                        : 'bg-slate-100 text-slate-400 cursor-not-allowed',
-                  ].join(' ')}
-                >
-                  {activeTimer && activeTimer.status === 'running' ? 'Pause' : 'Resume'}
-                </button>
-
-                {/* <button
-                  type="button"
-                  onClick={handleCompleteTimer}
-                  disabled={!activeTimer}
-                  className={[
-                    'flex-1 inline-flex items-center justify-center rounded-2xl px-4 py-3 text-sm font-semibold transition',
-                    activeTimer
-                      ? 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-sm'
-                      : 'bg-emerald-200 text-white cursor-not-allowed',
-                  ].join(' ')}
-                >
-                  Save session
-                </button> */}
-
-                <button
-                  type="button"
-                  // onClick={handleStartSelected}
-                  onClick={() => {
-                    playClick()
-                    handleStartSelected()
-                  }}
-                  className={[
-                    "flex-1 inline-flex items-center justify-center rounded-2xl px-4 py-2 text-sm font-semibold transition",
-                    isDark
-                      ? "bg-white text-slate-900 hover:bg-slate-200 active:scale-[0.98]"
-                      : "bg-slate-900 text-white hover:bg-slate-800 active:scale-[0.98]"
-                  ].join(" ")}
-                >
-                  Start
-                </button>
-
-                <button
-                  type="button"
-                  // onClick={handleCancelTimer}
-                  onClick={() => {
-                    playPause()
-                    handleCancelTimer()
-                  }}
-                  disabled={!activeTimer}
-                  className={[
-                    'flex-1 inline-flex items-center justify-center rounded-2xl border px-4 py-3 text-sm font-medium transition',
-                    activeTimer
-                      ? isDark
-                        ? 'border-slate-700 bg-slate-900 text-slate-300 hover:bg-red-900/20 hover:text-red-400'
-                        : 'border-slate-200 bg-white text-slate-600 hover:bg-red-50 hover:text-red-600'
-                      : isDark
-                        ? 'border-slate-700 bg-slate-800 text-slate-500 cursor-not-allowed'
-                        : 'border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed',
-                  ].join(' ')}
-                >
-                  {/* Stop in Between */}
-                  Reset
-                </button>
-              </div>
-
-              {timerError && (
-                <div className="mt-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-2 text-xs text-red-600 w-full max-w-md text-center">
-                  {timerError}
-                </div>
-              )}
-            </div>
-
-            {/* ACTIVE SESSION META â€” COMPACT + CLEAN */}
-            {activeTimer && (
-              <div className={['px-6 py-6 space-y-4', sessionsSoftCardClass].join(' ')}>
-
-                <div className="flex items-center gap-3">
-                  <input
-                    type="text"
-                    value={activeTimer.name}
-                    onChange={(event) =>
-                      handleUpdateActive('name', event.target.value)
-                    }
-                    className={['flex-1 rounded-2xl border px-4 py-2 text-sm font-medium focus:outline-none focus:ring-1 focus:ring-sky-500', sessionsInputClass].join(' ')}
-                    placeholder="Session name"
-                  />
-
-                  {/* <select
-                    value={activeTimer.subjectId}
-                    onChange={(event) =>
-                      handleUpdateActive('subjectId', event.target.value)
-
-                    }
-                    className={['rounded-2xl border px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-sky-500', sessionsInputClass].join(' ')}
-                  >
-                    <option value="">Select subject</option>
-                    {subjects.map((subject) => (
-                      <option key={subject.id} value={subject.id}>
-                        {subject.name}
-                      </option>
-                    ))}
-
-                    
-                  </select> */}
-{/* select sub inside timer running */}
-                  <div className="relative">
-                    <select
-                      value={activeTimer.subjectId}
-                      onChange={(event) =>
-                        handleUpdateActive("subjectId", event.target.value)
-                      }
-                      className={[
-                        "w-full appearance-none rounded-2xl border px-3 pr-10 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-sky-500 transition",
-                        isDark
-                          ? "bg-slate-900 border-slate-800 text-slate-200"
-                          : "bg-white border-slate-200 text-slate-700"
-                      ].join(" ")}
-                    >
-                      <option value="">Select subject</option>
-                      {subjects.map((subject) => (
-                        <option key={subject.id} value={subject.id}>
-                          {subject.name}
-                        </option>
-                      ))}
-                    </select>
-
-                    {/* Custom Arrow */}
-                    <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
-                      <ChevronDown
-                        size={16}
-                        className={isDark ? "text-slate-400" : "text-slate-500"}
-                      />
-                    </div>
-                  </div>
-
-
-
-                </div>
-
-                <textarea
-                  rows={3}
-                  value={activeTimer.notes}
-                  onChange={(event) =>
-                    handleUpdateActive('notes', event.target.value)
-                  }
-                  className={['w-full rounded-2xl border px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-sky-500', sessionsInputClass].join(' ')}
-                  placeholder="Optional notes about this focus block"
-                />
-              </div>
-            )}
-          </div>
-
-
-          {/* {timerMode === 'pomodoro' && (
-            <div className="pt-6">
-
-              <div className={['shadow-sm p-6 space-y-6', sessionsSubCardClass].join(' ')}>
-
-         
-                <div className={['text-sm font-semibold', sessionsTitleTextClass].join(' ')}>
-                  Pomodoro Settings
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-
-                  <div className="space-y-3">
-                    <div className={['text-xs font-medium uppercase tracking-wide', isDark ? 'text-slate-300' : 'text-slate-600'].join(' ')}>
-                      Pomodoro length
-                    </div>
-
-                    <div className="flex flex-wrap gap-2">
-                      {['25', '45', '90', '180'].map((value) => (
-                        <button
-                          key={value}
-                          type="button"
-                          onClick={() => setPomodoroPreset(value)}
-                          className={[
-                            'rounded-2xl px-3 py-1.5 text-sm font-medium border transition',
-                            pomodoroPreset === value
-                              ? 'bg-sky-500 text-white border-sky-500 shadow-sm'
-                              : isDark
-                                ? 'bg-slate-900 text-slate-200 border-slate-700 hover:bg-slate-800'
-                                : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100',
-                          ].join(' ')}
-                        >
-                          {value}m
-                        </button>
-                      ))}
-                    </div>
-
-                    <div className="flex items-center gap-2 pt-1">
-                      <button
-                        type="button"
-                        onClick={() => setPomodoroPreset('custom')}
-                        className={[
-                          'rounded-2xl px-3 py-1.5 text-sm font-medium border transition',
-                          pomodoroPreset === 'custom'
-                            ? 'bg-sky-500 text-white border-sky-500 shadow-sm'
-                            : isDark
-                              ? 'bg-slate-900 text-slate-200 border-slate-700 hover:bg-slate-800'
-                              : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100',
-                        ].join(' ')}
-                      >
-                        Custom
-                      </button>
-
-                      <input
-                        type="number"
-                        min="1"
-                        max="300"
-                        value={customMinutes}
-                        onChange={(event) => {
-                          setCustomMinutes(event.target.value)
-                          setPomodoroPreset('custom')
-                        }}
-                        className={['w-20 rounded-2xl border px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500', sessionsInputClass].join(' ')}
-                      />
-                      <span className={['text-sm', sessionsMutedTextClass].join(' ')}>min</span>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <div className={['text-xs font-medium uppercase tracking-wide', isDark ? 'text-slate-300' : 'text-slate-600'].join(' ')}>
-                      Short break
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="number"
-                        min="1"
-                        max="60"
-                        value={settings.shortBreakMinutes}
-                        onChange={(event) =>
-                          setSettings((prev) => ({
-                            ...prev,
-                            shortBreakMinutes: Number(event.target.value) || 5,
-                          }))
-                        }
-                        className={['w-20 rounded-2xl border px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500', sessionsInputClass].join(' ')}
-                      />
-                      <span className={['text-sm', sessionsMutedTextClass].join(' ')}>min</span>
-                    </div>
-                  </div>
-
-         
-                  <div className="space-y-3">
-                    <div className={['text-xs font-medium uppercase tracking-wide', isDark ? 'text-slate-300' : 'text-slate-600'].join(' ')}>
-                      Long break
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="number"
-                        min="5"
-                        max="90"
-                        value={settings.longBreakMinutes}
-                        onChange={(event) =>
-                          setSettings((prev) => ({
-                            ...prev,
-                            longBreakMinutes: Number(event.target.value) || 15,
-                          }))
-                        }
-                        className={['w-20 rounded-2xl border px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500', sessionsInputClass].join(' ')}
-                      />
-                      <span className={['text-sm', sessionsMutedTextClass].join(' ')}>min</span>
-                    </div>
-                  </div>
-
-           
-                  <div className="space-y-3">
-                    <div className={['text-xs font-medium uppercase tracking-wide', isDark ? 'text-slate-300' : 'text-slate-600'].join(' ')}>
-                      Long break every
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="number"
-                        min="2"
-                        max="12"
-                        value={settings.longBreakInterval}
-                        onChange={(event) =>
-                          setSettings((prev) => ({
-                            ...prev,
-                            longBreakInterval: Number(event.target.value) || 4,
-                          }))
-                        }
-                        className={['w-20 rounded-2xl border px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500', sessionsInputClass].join(' ')}
-                      />
-                      <span className={['text-sm', sessionsMutedTextClass].join(' ')}>cycles</span>
-                    </div>
-                  </div>
-
-                </div>
-
-              </div>
-            </div>
-          )} */}
-
-          {timerMode === 'pomodoro' && (
-            <div className="pt-8">
-              <div className={['rounded-3xl border p-8 space-y-8 shadow-sm', sessionsSubCardClass].join(' ')}>
-
-                {/* SECTION HEADER */}
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className={['text-lg font-semibold', sessionsTitleTextClass].join(' ')}>
-                      Pomodoro Settings
-                    </h3>
-                    <p className={['text-sm mt-1', sessionsMutedTextClass].join(' ')}>
-                      Configure your focus and break rhythm
-                    </p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-
-                  {/* ========================= */}
-                  {/* POMODORO LENGTH (PRIMARY) */}
-                  {/* ========================= */}
-                  <div className="xl:col-span-2 space-y-6">
-
-                    <div>
-                      <div className={['text-xs font-semibold uppercase tracking-wider mb-3', sessionsMutedTextClass].join(' ')}>
-                        Focus Duration
-                      </div>
-
-                      {/* Presets */}
-                      <div className="flex flex-wrap gap-3">
-                        {['25', '60', '90','180'].map((value) => (
-                        // {['25', '45', '90','120', '180'].map((value) => (
-                          <button
-                            key={value}
-                            type="button"
-                            onClick={() => setPomodoroPreset(value)}
-                            className={[
-                              'rounded-2xl px-4 py-2 text-sm font-semibold border transition-all duration-200',
-                              pomodoroPreset === value
-                                ? 'bg-sky-500 text-white border-sky-500  scale-[1.02]'
-                                : isDark
-                                  ? 'bg-slate-900 text-slate-200 border-slate-900 hover:bg-slate-800'
-                                  : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100',
-                            ].join(' ')}
-                          >
-                            {value} min
-                          </button>
-                        ))}
-                      </div>
-
-                      {/* Custom */}
-                      <div className="flex items-center gap-3 pt-4">
-                        <button
-                          type="button"
-                          onClick={() => setPomodoroPreset('custom')}
-                          className={[
-                            'rounded-2xl px-4 py-2 text-sm font-semibold border transition-all duration-200',
-                            pomodoroPreset === 'custom'
-                              ? 'bg-sky-500 text-white border-sky-500 shadow-md'
-                              : isDark
-                                ? 'bg-slate-900 text-slate-200 border-slate-700 hover:bg-slate-800'
-                                : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100',
-                          ].join(' ')}
-                        >
-                          Custom
-                        </button>
-
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="number"
-                            min="1"
-                            max="300"
-                            value={customMinutes}
-                            onChange={(e) => {
-                              setCustomMinutes(e.target.value)
-                              setPomodoroPreset('custom')
-                            }}
-                            className={[
-                              'w-24 rounded-2xl border px-4 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-sky-500 transition',
-                              sessionsInputClass
-                            ].join(' ')}
-                          />
-                          <span className={['text-sm', sessionsMutedTextClass].join(' ')}>
-                            minutes
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* ========================= */}
-                  {/* BREAK SETTINGS (SECONDARY) */}
-                  {/* ========================= */}
-                  {/* <div className="space-y-2"> */}
-
-                    {/* Short Break */}
-                    {/* <div className="space-y-2">
-                      <div className={['text-xs font-semibold uppercase tracking-wider', sessionsMutedTextClass].join(' ')}>
-                        Short Break
-                      </div>
-                      <input
-                        type="number"
-                        min="1"
-                        max="60"
-                        value={settings.shortBreakMinutes}
-                        onChange={(e) =>
-                          setSettings((prev) => ({
-                            ...prev,
-                            shortBreakMinutes: Number(e.target.value) || 5,
-                          }))
-                        }
-                        className={[
-                          'w-full rounded-2xl border px-4 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-sky-500 transition',
-                          sessionsInputClass
-                        ].join(' ')}
-                      />
-                    </div> */}
-
-                    {/* Long Break */}
-                    {/* <div className="space-y-2">
-                      <div className={['text-xs font-semibold uppercase tracking-wider', sessionsMutedTextClass].join(' ')}>
-                        Long Break
-                      </div>
-                      <input
-                        type="number"
-                        min="5"
-                        max="90"
-                        value={settings.longBreakMinutes}
-                        onChange={(e) =>
-                          setSettings((prev) => ({
-                            ...prev,
-                            longBreakMinutes: Number(e.target.value) || 15,
-                          }))
-                        }
-                        className={[
-                          'w-full rounded-2xl border px-4 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-sky-500 transition',
-                          sessionsInputClass
-                        ].join(' ')}
-                      />
-                    </div> */}
-
-                    {/* Long Break Interval */}
-                    {/* <div className="space-y-2">
-                      <div className={['text-xs font-semibold uppercase tracking-wider', sessionsMutedTextClass].join(' ')}>
-                        Long Break Every
-                      </div>
-                      <input
-                        type="number"
-                        min="2"
-                        max="12"
-                        value={settings.longBreakInterval}
-                        onChange={(e) =>
-                          setSettings((prev) => ({
-                            ...prev,
-                            longBreakInterval: Number(e.target.value) || 4,
-                          }))
-                        }
-                        className={[
-                          'w-full rounded-2xl border px-4 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-sky-500 transition',
-                          sessionsInputClass
-                        ].join(' ')}
-                      />
-                      <p className={['text-xs mt-1', sessionsMutedTextClass].join(' ')}>
-                        After this many focus sessions
-                      </p>
-                    </div> */}
-
-                  {/* </div> */}
-
-
-                  
-                </div>
-              </div>
-            </div>
-          )}
-
+          <PomodoroSettingsPanel
+            timerMode={timerMode}
+            sessionsSubCardClass={sessionsSubCardClass}
+            sessionsTitleTextClass={sessionsTitleTextClass}
+            sessionsMutedTextClass={sessionsMutedTextClass}
+            sessionsInputClass={sessionsInputClass}
+            isDark={isDark}
+            pomodoroPreset={pomodoroPreset}
+            setPomodoroPreset={setPomodoroPreset}
+            customMinutes={customMinutes}
+            setCustomMinutes={setCustomMinutes}
+          />
         </div>
 
-
-        <div className={['rounded-2xl shadow-sm p-5 space-y-6', isDark ? 'bg-slate-900 border border-slate-800' : 'bg-white border border-slate-200'].join(' ')}>
-
-          {/* Header */}
-          <div className='flex relative'>
-            <div>
-              <h2 className={['text-base font-semibold', sessionsTitleTextClass].join(' ')}>
-                Log manual session
-              </h2>
-              <p className={['text-xs mt-1', sessionsMutedTextClass].join(' ')}>
-                Add study time completed outside the timer.
-              </p>
-
-            </div>
-
-            <img
-              src={ClockImg}
-              alt="Study time"
-              className={[
-                "w-20 h-auto transition-opacity absolute mb-5  top-0 right-0 max-sm:top-10 max-sm:w-18 ",
-                isDark ? "opacity-60" : "opacity-70"
-              ].join(" ")}
-            />
-          </div>
-
-
-          <form onSubmit={handleSaveManual}
-            className="space-y-5">
-
-            {/* Session Name */}
-            <div className="space-y-1.5">
-              <label className={['text-xs font-medium', isDark ? 'text-slate-300' : 'text-slate-600'].join(' ')}>
-                Session name
-              </label>
-              <input
-                type="text"
-                value={manualForm.name}
-                onChange={(event) => handleManualChange('name', event.target.value)}
-                className={['w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500', sessionsInputClass].join(' ')}
-                placeholder="Deep work - Algorithms"
-              />
-            </div>
-
-            {/* Subject */}
-
-            <div className="space-y-1.5">
-              <label
-                className={[
-                  "text-xs font-medium",
-                  isDark ? "text-slate-300" : "text-slate-600"
-                ].join(" ")}
-              >
-                Subject
-              </label>
-
-              <div className="relative">
-                <select
-                  value={manualForm.subjectId}
-                  onChange={(event) => {
-                    playDropDown()
-                    handleManualChange("subjectId", event.target.value)
-                  }}
-                  className={[
-                    "w-full appearance-none rounded-xl border px-3 pr-10 py-2 text-sm transition focus:outline-none focus:ring-2 focus:ring-sky-500",
-                    isDark
-                      ? "bg-slate-900 border-slate-800 text-slate-200 hover:bg-slate-800"
-                      : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
-                  ].join(" ")}
-                >
-                  <option value="">Select subject</option>
-                  {subjects.map((subject) => (
-                    <option key={subject.id} value={subject.id}>
-                      {subject.name}
-                    </option>
-                  ))}
-                </select>
-
-                {/* Custom Arrow */}
-                <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
-                  <ChevronDown
-                    size={16}
-                    className={isDark ? "text-slate-400" : "text-slate-500"}
-                  />
-                </div>
-              </div>
-            </div>
-            {/* <div className="space-y-1.5">
-              <label className={['text-xs font-medium', isDark ? 'text-slate-300' : 'text-slate-600'].join(' ')}>
-                Subject
-              </label>
-              <select
-                value={manualForm.subjectId}
-                onChange={(event) => {
-                  playDropDown()
-                  handleManualChange('subjectId', event.target.value)
-
-
-                }}
-                className={['w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500', sessionsInputClass].join(' ')}
-              >
-                <option value="">Select subject</option>
-                {subjects.map((subject) => (
-                  <option key={subject.id} value={subject.id}>
-                    {subject.name}
-                  </option>
-                ))}
-              </select>
-            </div> */}
-
-            {/* Time Section */}
-            <div className={['rounded-xl border p-4 space-y-5', isDark ? 'bg-slate-800/70 border-slate-700' : 'bg-slate-50 border-slate-200'].join(' ')}>
-
-              <div className={['text-xs font-medium', isDark ? 'text-slate-300' : 'text-slate-600'].join(' ')}>
-                Time range
-              </div>
-
-              {/* Date */}
-              <div className="space-y-1.5">
-                <label className={['text-[11px]', sessionsMutedTextClass].join(' ')}>Date</label>
-                {/* <input
-                  type="date"
-                  value={manualForm.startTime?.split('T')[0] || ''}
-                  onChange={(event) => {
-                    const date = event.target.value
-                    const startTime = manualForm.startTime?.split('T')[1] || '00:00'
-                    const endTime = manualForm.endTime?.split('T')[1] || '00:00'
-
-                    handleManualChange('startTime', `${date}T${startTime}`)
-                    handleManualChange('endTime', `${date}T${endTime}`)
-                  }}
-                  // className={['w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500', sessionsInputClass].join(' ')}
-                  className={[
-                    'w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500',
-                    sessionsInputClass,
-                    isDark ? 'dark-date' : ''
-                  ].join(' ')}
-                /> */}
-
-                <DatePicker
-                  value={manualForm.startTime?.split("T")[0] || ""}
-                  isDark={isDark}
-                  onChange={(date) => {
-                    const startTime =
-                      manualForm.startTime?.split("T")[1] || "00:00"
-                    const endTime =
-                      manualForm.endTime?.split("T")[1] || "00:00"
-
-                    handleManualChange("startTime", `${date}T${startTime}`)
-                    handleManualChange("endTime", `${date}T${endTime}`)
-                  }}
-                />
-              </div>
-
-              {/* Start & End typed time */}
-              <div className="grid grid-cols-2 gap-4">
-
-                {/* Start */}
-                <div className="space-y-1.5">
-                  <label className={['text-[11px]', sessionsMutedTextClass].join(' ')}>Start (HH:MM)</label>
-                  <input
-                    type="text"
-                    placeholder="14:30"
-                    value={manualForm.startTime?.split('T')[1] || '00:00'}
-                    onChange={(event) => {
-                      const date = manualForm.startTime?.split('T')[0] || ''
-                      handleManualChange('startTime', `${date}T${event.target.value}`)
-                    }}
-                    className={['w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500', sessionsInputClass].join(' ')}
-                  />
-                </div>
-
-                {/* End */}
-                <div className="space-y-1.5">
-                  <label className={['text-[11px]', sessionsMutedTextClass].join(' ')}>End (HH:MM)</label>
-                  <input
-                    type="text"
-                    placeholder="16:00"
-                    value={manualForm.endTime?.split('T')[1] || '00:00'}
-                    onChange={(event) => {
-                      const date = manualForm.endTime?.split('T')[0] || ''
-                      handleManualChange('endTime', `${date}T${event.target.value}`)
-                    }}
-                    className={['w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500', sessionsInputClass].join(' ')}
-                  />
-                </div>
-
-              </div>
-
-              {/* Duration Preview */}
-              {manualForm.startTime && manualForm.endTime && (
-                <div className={['flex items-center justify-between rounded-xl border px-3 py-2 text-sm', isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'].join(' ')}>
-                  <span className={sessionsMutedTextClass}>Duration</span>
-                  <span className={['font-semibold', sessionsTitleTextClass].join(' ')}>
-                    {(() => {
-                      const start = new Date(manualForm.startTime)
-                      const end = new Date(manualForm.endTime)
-                      const diff = (end - start) / 60000
-                      if (diff > 0) {
-                        const h = Math.floor(diff / 60)
-                        const m = Math.floor(diff % 60)
-                        return `${h}h ${m}m`
-                      }
-                      return 'â€”'
-                    })()}
-                  </span>
-                </div>
-              )}
-
-            </div>
-
-
-            {/* Notes */}
-            <div className="space-y-1.5">
-              <label className={['text-xs font-medium', isDark ? 'text-slate-300' : 'text-slate-600'].join(' ')}>
-                Notes
-              </label>
-              <textarea
-                rows={3}
-                value={manualForm.notes}
-                onChange={(event) => handleManualChange('notes', event.target.value)}
-                className={['w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500', sessionsInputClass].join(' ')}
-                placeholder="Optional notes..."
-              />
-            </div>
-
-            {/* Submit */}
-            <button
-              type="submit"
-              onClick={() => {
-                playPause()
-              }}
-              disabled={savingManual}
-              className={[
-                'w-full rounded-xl px-4 py-2.5 text-sm font-semibold transition',
-                savingManual
-                  ? 'bg-slate-300 text-slate-500 cursor-wait'
-                  : 'bg-sky-500 text-white hover:bg-sky-600'
-              ].join(' ')}
-            >
-              {savingManual ? 'Saving...' : 'Save manual session'}
-            </button>
-
-          </form>
-        </div>
-
+        <ManualSessionForm
+          isDark={isDark}
+          sessionsTitleTextClass={sessionsTitleTextClass}
+          sessionsMutedTextClass={sessionsMutedTextClass}
+          sessionsInputClass={sessionsInputClass}
+          ClockImg={ClockImg}
+          handleSaveManual={handleSaveManual}
+          manualForm={manualForm}
+          handleManualChange={handleManualChange}
+          subjects={subjects}
+          savingManual={savingManual}
+        />
       </div>
 
-      <div className={['shadow-sm p-6 flex flex-col gap-6 ', sessionsCardClass].join(' ')}>
-
-        {/* HEADER */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div>
-            <h2 className={['text-lg font-semibold', sessionsTitleTextClass].join(' ')}>
-              Session history
-            </h2>
-            <div className={['text-sm', sessionsMutedTextClass].join(' ')}>
-              Track and manage all recorded focus sessions
-            </div>
-          </div>
-
-          {/* FILTERS */}
-          <div className="flex flex-wrap gap-3 text-sm">
-
-            <select
-              value={filters.subjectId}
-              onChange={(event) =>
-                setFilters((prev) => ({ ...prev, subjectId: event.target.value }))
-              }
-              className={['rounded-2xl border px-4 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500', sessionsInputClass].join(' ')}
-            >
-              <option value="">All subjects</option>
-              {subjects.map((subject) => (
-                <option key={subject.id} value={subject.id}>
-                  {subject.name}
-                </option>
-              ))}
-            </select>
-
-            <input
-              type="date"
-              value={filters.fromDate}
-              onChange={(event) =>
-                setFilters((prev) => ({ ...prev, fromDate: event.target.value }))
-              }
-              className={['rounded-2xl border px-4 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500', sessionsInputClass].join(' ')}
-            />
-
-            <input
-              type="date"
-              value={filters.toDate}
-              onChange={(event) =>
-                setFilters((prev) => ({ ...prev, toDate: event.target.value }))
-              }
-              className={['rounded-2xl border px-4 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500', sessionsInputClass].join(' ')}
-            />
-
-            <input
-              type="number"
-              min="0"
-              value={filters.minMinutes}
-              onChange={(event) =>
-                setFilters((prev) => ({ ...prev, minMinutes: event.target.value }))
-              }
-              placeholder="Min min"
-              className={['w-28 rounded-2xl border px-4 py-2 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500', sessionsInputClass].join(' ')}
-            />
-          </div>
-        </div>
-
-        {/* CONTENT */}
-        <div className={['overflow-hidden rounded-3xl border', isDark ? 'border-slate-800' : 'border-slate-100'].join(' ')}>
-
-          {loading ? (
-            <div className={['py-10 text-center text-sm', sessionsMutedTextClass].join(' ')}>
-              Loading sessions...
-            </div>
-          ) : filteredSessions.length === 0 ? (
-            <div className="py-12 text-center">
-              <div className={['text-sm font-medium', isDark ? 'text-slate-200' : 'text-slate-700'].join(' ')}>
-                No sessions yet
-              </div>
-              <div className={['text-sm mt-1', sessionsMutedTextClass].join(' ')}>
-                Start a timer or log a manual session to see data here.
-              </div>
-            </div>
-          ) : (
-            <div className={['divide-y', isDark ? 'divide-slate-800' : 'divide-slate-100'].join(' ')}>
-
-              {/* {filteredSessions.map((session) => { */}
-                  {filteredSessions.slice(0, visibleCount).map((session) => {
-                const date = new Date(session.start_time)
-                const durationMinutes = Number(session.duration_minutes) || 0
-
-                return (
-                  <div
-                    key={session.id}
-                    className={['flex flex-col md:flex-row md:items-center md:justify-between gap-4 px-6 py-4 transition', isDark ? 'hover:bg-slate-800/60' : 'hover:bg-slate-50'].join(' ')}
-                  >
-
-                    {/* LEFT SIDE */}
-                    <div className="flex flex-col gap-1">
-
-                      <div className={['text-sm font-medium', sessionsTitleTextClass].join(' ')}>
-                        {session.name || 'Focus session'}
-                      </div>
-
-                      <div className={['text-sm', sessionsMutedTextClass].join(' ')}>
-                        {date.toLocaleDateString()} Â·{' '}
-                        {date.toLocaleTimeString([], {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </div>
-
-                      <div className="flex flex-wrap gap-2 pt-1">
-
-                        <span className={['inline-flex items-center rounded-full px-3 py-1 text-xs', isDark ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600'].join(' ')}>
-                          {session.subject_id
-                            ? resolveSubjectName(session.subject_id)
-                            : 'Unassigned'}
-                        </span>
-
-                        <span className={['inline-flex items-center rounded-full px-3 py-1 text-xs capitalize', isDark ? 'bg-sky-900/30 text-sky-300' : 'bg-sky-100 text-sky-700'].join(' ')}>
-                          {session.type}
-                        </span>
-
-                      </div>
-                    </div>
-
-                    {/* RIGHT SIDE */}
-                    <div className="flex items-center gap-4">
-
-                      <div className={['text-lg font-semibold tabular-nums', sessionsTitleTextClass].join(' ')}>
-                        {durationMinutes.toFixed(1)} min
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          playDelete()
-                          handleDeleteSession(session.id)
-
-                        }}
-                        // className={['rounded-xl px-3 py-1.5 text-sm font-medium transition hover:text-red-500', isDark ? 'text-slate-400 hover:bg-red-900/20' : 'text-slate-500 hover:bg-red-50'].join(' ')}
-                        className={deleteButtonClass}
-                      >
-                        {/* Delete */}
-                        <Trash2 className="h-5 w-5" />
-                      </button>
-
-                    </div>
-
-                    
-                  </div>
-                )
-              })}
-
-{/* show sessions button */}
-                  {filteredSessions.length > INITIAL_VISIBLE && (
-                    <div className="flex justify-center py-4 px-4">
-                      {visibleCount < filteredSessions.length ? (
-                        <button
-                          onClick={() => setVisibleCount(prev => prev + LOAD_MORE_COUNT)}
-                          className={[
-                            "rounded-2xl px-5 py-2 text-sm font-medium transition",
-                            isDark
-                              ? "bg-slate-800 text-slate-200 hover:bg-slate-700"
-                              : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                          ].join(" ")}
-                        >
-                          Show more
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => setVisibleCount(INITIAL_VISIBLE)}
-                          className={[
-                            "rounded-2xl px-5 py-2 text-sm font-medium transition",
-                            isDark
-                              ? "bg-slate-800 text-slate-200 hover:bg-slate-700"
-                              : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                          ].join(" ")}
-                        >
-                          Show less
-                        </button>
-                      )}
-                    </div>
-                  )}
-
-
-
-            </div>
-          )}
-        </div>
-      </div>
-
+      <SessionHistory
+        isDark={isDark}
+        sessionsCardClass={sessionsCardClass}
+        sessionsTitleTextClass={sessionsTitleTextClass}
+        sessionsMutedTextClass={sessionsMutedTextClass}
+        sessionsInputClass={sessionsInputClass}
+        filters={filters}
+        setFilters={setFilters}
+        subjects={subjects}
+        loading={loading}
+        filteredSessions={filteredSessions}
+        visibleCount={visibleCount}
+        setVisibleCount={setVisibleCount}
+        INITIAL_VISIBLE={INITIAL_VISIBLE}
+        LOAD_MORE_COUNT={LOAD_MORE_COUNT}
+        resolveSubjectName={resolveSubjectName}
+        handleDeleteSession={handleDeleteSession}
+        deleteButtonClass={deleteButtonClass}
+      />
     </div>
-
   )
 }
 
 
 export default SessionsPage
+
+
