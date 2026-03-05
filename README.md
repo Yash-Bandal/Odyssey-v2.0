@@ -1,6 +1,11 @@
 # Odyssey v2.0 -  Study Planner 🎓
 
-Odyssey is a React + Vite + Tailwind + Supabase study planning app for semester-based planning, session tracking, analytics, and rewards.
+---
+> [!Tip]
+> # Gamify studying, make progress visible.
+---
+
+Odyssey is a **Study Planning App** for rewarding consistency, semester-based planning, session tracking, and analytics.
 
 ## Tech Stack
 - Frontend: React 19, React Router
