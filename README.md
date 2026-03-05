@@ -1,4 +1,4 @@
-# Odyssey Study Planner
+# Odyssey v2.0 -  Study Planner 🎓
 
 Odyssey is a React + Vite + Tailwind + Supabase study planning app for semester-based planning, session tracking, analytics, and rewards.
 
@@ -9,6 +9,30 @@ Odyssey is a React + Vite + Tailwind + Supabase study planning app for semester-
 - Backend: Supabase (Auth + Postgres)
 - Alerts/UI feedback: SweetAlert2
 - Icons: Lucide React
+
+
+
+<br>
+
+##  First Look
+
+<table>
+  <tr>
+    <td align="center" width="600">
+ <img width="350"  alt="image" src="https://github.com/Yash-Bandal/Odyssey-v2.0/blob/14abc67ce56ae6765236bde7fc9b7be76b37bb03/Docs/dashboard.png" />
+      <br>
+      <b> Dashboard </b>
+    </td>
+    <td align="center" width="600">
+     <img width="350"  alt="image" src="https://github.com/Yash-Bandal/Odyssey-v2.0/blob/14abc67ce56ae6765236bde7fc9b7be76b37bb03/Docs/streak-tracker.png" />
+      <br>
+      <b>Consistency Tracker</b>
+    </td>
+  </tr>
+</table>
+
+<br>
+
 
 ## Core Features
 - Authentication with email/password and password reset
@@ -153,6 +177,8 @@ Defined in `src/components/layout/AppShell.jsx`:
 - Supabase project
 
 ## Setup
+For detailed setup, refer -[docs](https://github.com/Yash-Bandal/Odyssey-v2.0/blob/main/Docs/Readme_setup.md)
+
 1. Install dependencies:
 ```bash
 npm install
@@ -190,7 +216,7 @@ If either is missing, app initialization throws an error.
 The app uses `createClient` from `@supabase/supabase-js` in `src/supabaseClient.js` and imports that singleton across pages/components.
 
 ## Expected Database Tables
-Based on current code usage, these tables are required:
+Based on current code usage, these [tables](https://github.com/Yash-Bandal/Odyssey-v2.0/blob/main/Docs/Readme_supabase_db.md) are required:
 
 ### `semesters`
 - `id` (pk)
