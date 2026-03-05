@@ -280,3 +280,10 @@ From `package.json`:
 - Keep `.env` out of version control.
 - The app stores some UI/timer state in localStorage.
 - `src/services/supabaseClient.js` exists in addition to `src/supabaseClient.js`; current page code primarily uses `src/supabaseClient.js`.
+
+
+<br>
+
+
+##  License
+[MIT License](https://github.com/Yash-Bandal/Odyssey-v2.0/blob/main/LICENSE) – Madw with ❤ By [YB](https://yashbandal.netlify.app/)
