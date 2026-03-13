@@ -5,13 +5,13 @@ function GoalsNotesCard({ tipsCardClass, tipsTitleClass, tipsTextClass }) {
 
       <ul className={tipsTextClass}>
         <li>
-          â€¢ A subject cannot be deleted if study sessions are linked to it.
-          Please delete all sessions related to that subject first.
+         A subject cannot be deleted if study sessions are linked to it.
+          Please make sure you <strong>Delete</strong> all sessions related to that subject first.
         </li>
 
         <li>
-          â€¢ All changes on this page â€” including semester settings and subjects â€”
-          are saved together using the <strong>â€œSave All Changesâ€</strong> button.
+          All changes on this page  "including semester settings and subjects"
+          are saved together using the <strong>Save All Changes </strong> button.
         </li>
       </ul>
     </section>
