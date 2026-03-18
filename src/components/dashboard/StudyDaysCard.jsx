@@ -6,6 +6,7 @@ function StudyDaysCard({
   dashboardStrongTextClass,
   ActivityImg,
   summary,
+  status,
 }) {
   return (
     <div className={dashboardCardClass}>
@@ -21,9 +22,15 @@ function StudyDaysCard({
           ].join(' ')}
         />
 
-        <span className="inline-flex items-center rounded-full bg-emerald-50 text-emerald-700 px-3 py-1 text-xs font-semibold">
+        {/* <span className="inline-flex items-center rounded-full bg-emerald-50 text-emerald-700 px-3 py-1 text-xs font-semibold">
           On track
+        </span> */}
+        <span
+          className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${status?.bg} ${status?.color}`}
+        >
+          {status?.label}
         </span>
+        
       </div>
 
       <div className="space-y-4 text-sm ">
