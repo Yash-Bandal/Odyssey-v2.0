@@ -78,6 +78,79 @@ function DashboardPlaceholder({ user, semester, sessionsVersion, isDark = false 
       const remainingDays = semesterEnd > today ? Math.ceil((semesterEnd - today) / oneDayMs) : 0
       const requiredDailyHours = remainingDays > 0 ? remainingHours / remainingDays : 0
 
+
+      //===============Pace calculation ->on track and all status ===============
+      // Days passed in semester
+      const totalSemesterDays = Math.floor((semesterEnd - semesterStart) / oneDayMs) + 1
+      
+      const daysPassed =
+        today < semesterStart
+          ? 0
+          : Math.min(
+              Math.floor((today - semesterStart) / oneDayMs) + 1,
+              totalSemesterDays
+            )
+      
+      // Actual pace
+      const actualDailyHours =
+        daysPassed > 0 ? totalStudiedHours / daysPassed : 0
+
+      let status = {
+        label: '',
+        color: '',
+        bg: '',
+      }
+      
+      if (requiredDailyHours === 0) {
+        status = {
+          label: 'No goal set',
+          color: 'text-slate-500',
+          bg: 'bg-slate-100',
+        }
+      } else if (daysPassed === 0) {
+        status = {
+          label: 'Not started',
+          color: 'text-slate-500',
+          bg: 'bg-slate-100',
+        }
+      } else if (actualDailyHours === 0) {
+        status = {
+          label: 'Start studying',
+          color: 'text-red-600',
+          bg: 'bg-red-50',
+        }
+      } else {
+        const upperBound = requiredDailyHours * 1.1
+        const lowerBound = requiredDailyHours * 0.9
+      
+        if (actualDailyHours > upperBound) {
+          status = {
+            label: 'Ahead of schedule',
+            color: 'text-sky-600',
+            bg: 'bg-sky-50',
+          }
+        } else if (actualDailyHours >= lowerBound) {
+          status = {
+            label: 'On track',
+            color: 'text-emerald-700',
+            bg: 'bg-emerald-50',
+          }
+        } else if (actualDailyHours >= requiredDailyHours * 0.6) {
+          status = {
+            label: 'Catch up',
+            color: 'text-yellow-700',
+            bg: 'bg-yellow-50',
+          }
+        } else {
+          status = {
+            label: 'Falling behind',
+            color: 'text-red-700',
+            bg: 'bg-red-50',
+          }
+        }
+      }
+     //========================================================
+
       if (error || !data) {
         setSummary({
           todayMinutes: 0,
@@ -219,6 +292,9 @@ function DashboardPlaceholder({ user, semester, sessionsVersion, isDark = false 
         semesterRemainingHours: remainingHours,
         semesterRemainingDays: remainingDays,
         semesterRequiredDailyHours: requiredDailyHours,
+        // ======== status ================
+        status,
+        //===============================
         thisMonth,
         lastMonth,
       })
@@ -387,6 +463,7 @@ function DashboardPlaceholder({ user, semester, sessionsVersion, isDark = false 
             dashboardStrongTextClass={dashboardStrongTextClass}
             ActivityImg={ActivityImg}
             summary={summary}
+            status={summary.status} //status
           />
         </div>
       </div>
