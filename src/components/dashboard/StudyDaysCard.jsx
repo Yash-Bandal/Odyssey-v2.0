@@ -17,7 +17,7 @@ function StudyDaysCard({
           src={ActivityImg}
           alt="Activity"
           className={[
-            'w-24 h-auto transition-opacity duration-300 absolute top-0 right-20  max-sm:top-0 ',
+            'w-24 h-auto transition-opacity duration-300 absolute top-0 right-24  max-sm:top-0 ',
             isDark ? 'opacity-20' : 'opacity-70',
           ].join(' ')}
         />
@@ -26,7 +26,7 @@ function StudyDaysCard({
           On track
         </span> */}
         <span
-          className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${status?.bg} ${status?.color}`}
+          className={`inline-flex items-center rounded-full px-2  py-1 text-xs font-semibold ${status?.bg} ${status?.color}`}
         >
           {status?.label}
         </span>
@@ -60,6 +60,15 @@ function StudyDaysCard({
             {summary.semesterRequiredDailyHours.toFixed(2)} h/day
           </span>
         </div>
+
+        <div className="flex items-baseline justify-between">
+          <span className={dashboardMutedTextClass}>Total Studied Upto Now</span>
+          <span className={dashboardStrongTextClass}>
+            {summary.totalLifetimeHours?.toFixed(1)} h
+          </span>
+        </div>
+
+
       </div>
     </div>
   )

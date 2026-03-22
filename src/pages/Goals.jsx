@@ -10,6 +10,35 @@ import GoalsNotesCard from '../components/goals/GoalsNotesCard'
 import { useSemesterCalculations } from '../hooks/useSemesterCalculations'
 
 function GoalsPage({ user, semester, onSemesterChanged, isDark = false }) {
+  //==================All semesters===============
+
+
+
+  const [allSemesters, setAllSemesters] = useState([])
+  const isPastSemester = new Date() > new Date(semester.end_date)
+
+
+  useEffect(() => {
+    if (!user?.id) return
+
+    const loadSemesters = async () => {
+      const { data, error } = await supabase
+        .from('semesters')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('start_date', { ascending: false })
+
+      if (!error) {
+        setAllSemesters(data || [])
+      }
+    }
+
+    loadSemesters()
+  }, [user?.id])
+
+  //====================================================
+
+
   const [subjects, setSubjects] = useState([])
   const [saving, setSaving] = useState(false)
   const [, setError] = useState('')
@@ -66,6 +95,41 @@ function GoalsPage({ user, semester, onSemesterChanged, isDark = false }) {
       return;
     }
 
+
+    ///================== old date anomaly ================
+
+    const oldStart = new Date(semester.start_date)
+
+
+    const newEnd = new Date(form.endDate)
+
+    // ❌ start date backward
+
+    const today = new Date()
+    const todayOnly = new Date(today.toDateString())
+    const newStart = new Date(form.startDate)
+
+    // ❌ ONLY block past dates
+    if (newStart < todayOnly) {
+      await Swal.fire({
+        icon: "error",
+        title: "Invalid Start Date",
+        text: "Start date cannot be in the past.",
+      })
+      return
+    }
+    // ❌ end date in past
+    if (newEnd < new Date(today.toDateString())) {
+      await Swal.fire({
+        icon: "error",
+        title: "Invalid End Date",
+        text: "End date cannot be in the past.",
+      })
+      return
+    }
+
+
+    //=================================
     const result = await Swal.fire({
       title: "Save changes?",
       text: "This will update semester settings and subjects.",
@@ -98,26 +162,26 @@ function GoalsPage({ user, semester, onSemesterChanged, isDark = false }) {
 
       if (semesterError) throw semesterError;
 
-      // Save subjects
-      for (const subject of subjects) {
-        if (subject.id) {
-          await supabase
-            .from("subjects")
-            .update({
-              name: subject.name,
-              target_hours: Number(subject.target_hours),
-              weight: subject.weight ? Number(subject.weight) : null,
-            })
-            .eq("id", subject.id);
-        } else {
-          await supabase.from("subjects").insert({
-            semester_id: semester.id,
-            name: subject.name,
-            target_hours: Number(subject.target_hours),
-            weight: subject.weight ? Number(subject.weight) : null,
-          });
-        }
-      }
+      // Save subjects - single button logic
+      // for (const subject of subjects) {
+      //   if (subject.id) {
+      //     await supabase
+      //       .from("subjects")
+      //       .update({
+      //         name: subject.name,
+      //         target_hours: Number(subject.target_hours),
+      //         weight: subject.weight ? Number(subject.weight) : null,
+      //       })
+      //       .eq("id", subject.id);
+      //   } else {
+      //     await supabase.from("subjects").insert({
+      //       semester_id: semester.id,
+      //       name: subject.name,
+      //       target_hours: Number(subject.target_hours),
+      //       weight: subject.weight ? Number(subject.weight) : null,
+      //     });
+      //   }
+      // }
 
       // Refresh subjects
       const { data: refreshed } = await supabase
@@ -148,6 +212,149 @@ function GoalsPage({ user, semester, onSemesterChanged, isDark = false }) {
 
     setSaving(false);
   };
+
+
+  //=======================New semester================
+  const handleStartNewSemester = async () => {
+
+    if (!calculations) {
+      await Swal.fire({
+        icon: "error",
+        title: "Invalid Input",
+        text: "Please provide valid semester dates and total goal hours.",
+      });
+      return;
+    }
+
+    //============prevent anomalies
+
+    const today = new Date()
+    const todayOnly = new Date(today.toDateString())
+    const newStart = new Date(form.startDate)
+
+    const isActiveSemester = allSemesters.some((sem) => {
+      const start = new Date(sem.start_date)
+      const end = new Date(sem.end_date)
+
+      return start <= today && today <= end
+    })
+
+
+    // ❌ only block past dates
+    if (newStart < todayOnly) {
+      await Swal.fire({
+        icon: "error",
+        title: "Invalid Start Date",
+        text: "Start date cannot be in the past.",
+      })
+      return
+    }
+
+
+    // ❌ Prevent starting new semester while current is active
+    if (isActiveSemester) {
+      await Swal.fire({
+        icon: "warning",
+        title: "Active semester ongoing",
+        text: "You can update your current semester or start a new one after it ends.",
+      })
+      return
+    }
+
+
+
+
+    //old code
+    // const currentEnd = new Date(semester.end_date)
+
+    // if (today < currentEnd) {
+    //   await Swal.fire({
+    //     icon: "warning",
+    //     title: "Current semester still active",
+    //     text: "Tip: You can update your current semester or start a new one after it ends.",
+    //   })
+    //   return
+    // }
+
+
+    // ❌ Prevent overlapping with latest semester
+    if (allSemesters.length > 0) {
+
+      const latest = allSemesters[0] // sorted descending
+
+      const latestEnd = new Date(latest.end_date)
+
+      if (newStart <= latestEnd) {
+        await Swal.fire({
+          icon: "error",
+          title: "Overlap not allowed",
+          text: "New semester must start after your last semester ends.",
+        })
+        return
+      }
+    }
+    // =============
+
+    const result = await Swal.fire({
+      title: "Start new semester?",
+      text: "This will create a new semester. Your previous data will remain .",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Start",
+      confirmButtonColor: "#0ea5e9",
+      cancelButtonText: "Cancel",
+    });
+
+    if (!result.isConfirmed) return;
+
+    setSaving(true);
+
+    try {
+      // CREATE NEW SEMESTER (IMPORTANT)
+      const { data: newSemester, error } = await supabase
+        .from("semesters")
+        .insert({
+          user_id: user.id,
+          start_date: form.startDate,
+          end_date: form.endDate,
+          total_goal_hours: Number(form.totalHours),
+          total_study_days: calculations.totalDays,
+          daily_required_hours: calculations.dailyAverage,
+          weekly_required_hours: calculations.weeklyPace,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Switch to new semester
+      if (onSemesterChanged) {
+        await onSemesterChanged(newSemester);
+      }
+
+
+
+      await Swal.fire({
+        position: "top-end",
+        icon: "success",
+        title: "New semester started",
+        showConfirmButton: false,
+        timer: 1500,
+        toast: true,
+      });
+
+    } catch (err) {
+      await Swal.fire({
+        icon: "error",
+        title: "Failed",
+        text: err.message || "Something went wrong.",
+      });
+    }
+
+    setSaving(false);
+  };
+
+  //==================================================
 
   // ================= ADD SUBJECT =================
   const handleAddSubject = () => {
@@ -210,6 +417,105 @@ function GoalsPage({ user, semester, onSemesterChanged, isDark = false }) {
   };
 
 
+  //=================== SAVES UBJECTS ================
+  const handleSaveSubjects = async () => {
+    setSaving(true)
+
+    try {
+      for (const subject of subjects) {
+        if (subject.id) {
+          await supabase
+            .from("subjects")
+            .update({
+              name: subject.name,
+              target_hours: Number(subject.target_hours),
+              weight: subject.weight ? Number(subject.weight) : null,
+            })
+            .eq("id", subject.id);
+        } else {
+          await supabase.from("subjects").insert({
+            semester_id: semester.id,
+            name: subject.name,
+            target_hours: Number(subject.target_hours),
+            weight: subject.weight ? Number(subject.weight) : null,
+          });
+        }
+      }
+
+      const { data: refreshed } = await supabase
+        .from("subjects")
+        .select("*")
+        .eq("semester_id", semester.id);
+
+      setSubjects(refreshed || [])
+
+      await Swal.fire({
+        icon: "success",
+        title: "Subjects saved",
+        timer: 1200,
+        toast: true,
+        position: "top-end",
+        showConfirmButton: false,
+      })
+
+    } catch (err) {
+      await Swal.fire({
+        icon: "error",
+        title: "Failed",
+        text: err.message,
+      })
+    }
+
+    setSaving(false)
+  }
+
+  const [isSavingSubjects, setIsSavingSubjects] = useState(false)
+  useEffect(() => {
+    if (!subjects.length) return
+
+    const timeout = setTimeout(async () => {
+      setIsSavingSubjects(true)
+
+      try {
+        for (const subject of subjects) {
+          if (subject.id) {
+            await supabase
+              .from("subjects")
+              .update({
+                name: subject.name,
+                target_hours: Number(subject.target_hours),
+                weight: subject.weight ? Number(subject.weight) : null,
+              })
+              .eq("id", subject.id)
+          } else if (subject.name) {
+            const { data } = await supabase
+              .from("subjects")
+              .insert({
+                semester_id: semester.id,
+                name: subject.name,
+                target_hours: Number(subject.target_hours),
+                weight: subject.weight ? Number(subject.weight) : null,
+              })
+              .select()
+              .single()
+
+            // replace temp subject with saved one (IMPORTANT)
+            setSubjects((prev) =>
+              prev.map((s) => (s === subject ? data : s))
+            )
+          }
+        }
+      } catch (err) {
+        console.error("Auto save failed", err)
+      }
+
+      setIsSavingSubjects(false)
+    }, 800) // ⏱ debounce delay
+
+    return () => clearTimeout(timeout)
+  }, [subjects])
+  //================================================
+
   // ================= STYLES =================
   const card = isDark
     ? 'rounded-3xl bg-slate-900 border border-slate-800 shadow-sm p-6'
@@ -224,7 +530,7 @@ function GoalsPage({ user, semester, onSemesterChanged, isDark = false }) {
   // Card containers (for semester, subjects, and tips sections)
   const cardClass = isDark
     ? 'rounded-3xl bg-slate-900 border border-slate-800 shadow-sm p-8 space-y-8'
-    : 'rounded-3xl bg-white border border-slate-200 shadow-sm p-8 space-y-8';
+    : 'relative rounded-3xl bg-white border border-slate-200 shadow-sm p-8 space-y-8';
 
   // Inputs (for dates, hours, subject names, etc.)
   const inputClass = isDark
@@ -290,7 +596,12 @@ function GoalsPage({ user, semester, onSemesterChanged, isDark = false }) {
 
   const tipsTitleClass = isDark ? 'text-lg font-semibold text-slate-100 mb-3' : 'text-lg font-semibold text-slate-800 mb-3';
 
-  const tipsTextClass = isDark ? 'space-y-2 text-sm text-slate-300' : 'space-y-2 text-sm text-slate-600';
+  const tipsTextClass = isDark ? 'space-y-2  ml-6  text-sm text-slate-300 list-decimal' : 'space-y-2  ml-6 text-sm text-slate-600 list-decimal';
+
+
+
+
+
 
 
   // ================= UI =================
@@ -311,7 +622,12 @@ function GoalsPage({ user, semester, onSemesterChanged, isDark = false }) {
         metricCardClass={metricCardClass}
         metricMutedClass={metricMutedClass}
         metricTitleClass={metricTitleClass}
+
+
         handleSave={handleSave}
+        handleStartNewSemester={handleStartNewSemester}
+        isPastSemester={isPastSemester}
+
         saving={saving}
         saveButtonClass={saveButtonClass}
       />
@@ -330,7 +646,48 @@ function GoalsPage({ user, semester, onSemesterChanged, isDark = false }) {
         subjectNumberInputClass={subjectNumberInputClass}
         handleDeleteSubject={handleDeleteSubject}
         deleteButtonClass={deleteButtonClass}
+
+        handleSaveSubjects={handleSaveSubjects}
+        isSavingSubjects={isSavingSubjects} //auto save
       />
+
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold">All Semesters</h3>
+
+        {allSemesters.map((sem) => {
+          const today = new Date()
+
+          const isActive =
+            new Date(sem.start_date) <= today &&
+            today <= new Date(sem.end_date)
+
+          return (
+
+            <div
+              key={sem.id}
+              className="p-4 rounded-xl border border-slate-200 bg-white"
+            >
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="font-medium">
+                    {sem.start_date} → {sem.end_date}
+                  </p>
+                  <p className="text-sm text-slate-500">
+                    Goal: {sem.total_goal_hours}h
+                  </p>
+                </div>
+
+                <div className="text-sm text-slate-400">
+                  {/* {sem.id === semester.id ? 'Current' : 'Past'} */}
+                  {isActive ? 'Current' : 'Past'}
+                </div>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+
 
       <GoalsNotesCard
         tipsCardClass={tipsCardClass}

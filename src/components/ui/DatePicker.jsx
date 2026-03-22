@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from "react"
 import { DayPicker } from "react-day-picker"
 import { Calendar } from "lucide-react"
 
-// import "react-day-picker/dist/style.css"   
+// import "react-day-picker/dist/style.css"
+const currentYear = new Date().getFullYear()   
+// console.log(currentYear)
 
 export default function DatePicker({
     value,
@@ -86,8 +88,10 @@ export default function DatePicker({
                         selected={selectedDate}
                         onSelect={handleSelect}
                         captionLayout="dropdown"
-                        fromYear={2022}
-                        toYear={2035}
+                        // fromYear={2022}
+                        // toYear={2032}
+                        fromYear={currentYear - 4}
+                        toYear={currentYear + 5}
                         disabled={disableFuture ? { after: new Date() } : undefined}
                         className="w-full"
                         classNames={{

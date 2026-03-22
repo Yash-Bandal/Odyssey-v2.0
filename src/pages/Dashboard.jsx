@@ -54,6 +54,13 @@ function DashboardPlaceholder({ user, semester, sessionsVersion, isDark = false 
 
   useEffect(() => {
     const load = async () => {
+      //  GLOBAL (lifetime sessions)
+      const { data: allSessions } = await supabase
+        .from('sessions')
+        .select('duration_minutes')
+        .eq('user_id', user.id)
+
+
       const { data, error } = await supabase
         .from('sessions')
         .select('start_time, end_time, duration_minutes, type')
@@ -61,6 +68,15 @@ function DashboardPlaceholder({ user, semester, sessionsVersion, isDark = false 
         .eq('semester_id', semester.id)
         .order('start_time', { ascending: false })
         .limit(1000)
+
+      let totalLifetimeMinutes = 0
+
+      allSessions?.forEach((session) => {
+        totalLifetimeMinutes += Number(session.duration_minutes) || 0
+      })
+
+      const totalLifetimeHours = totalLifetimeMinutes / 60
+      //====================================================
 
       const semesterStart = new Date(semester.start_date)
       const semesterEnd = new Date(semester.end_date)
@@ -297,6 +313,8 @@ function DashboardPlaceholder({ user, semester, sessionsVersion, isDark = false 
         //===============================
         thisMonth,
         lastMonth,
+
+        totalLifetimeHours,
       })
 
       const { data: existingRewards } = await supabase

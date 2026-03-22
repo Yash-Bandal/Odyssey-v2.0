@@ -8,10 +8,15 @@ function Last30DaysCard({
   analyticsMutedClass,
   analyticsGridStroke,
   analyticsTick,
+  mode,
 }) {
   return (
     <section className={analyticsCardClass}>
-      <h2 className={['text-lg font-semibold mb-4', analyticsTitleClass].join(' ')}>Last 30 Days</h2>
+      {/* <h2 className={['text-lg font-semibold mb-4', analyticsTitleClass].join(' ')}>Last 30 Days</h2> */}
+      <h2 className={['text-lg font-semibold mb-4', analyticsTitleClass].join(' ')}>
+        {mode === 'global' ? 'Recent 30-Day Activity' : 'Last 30 Days'}
+      </h2>
+
       <div className="h-72">
         {loading ? (
           <div className={['h-full flex items-center justify-center text-sm', analyticsMutedClass].join(' ')}>Loading analytics...</div>

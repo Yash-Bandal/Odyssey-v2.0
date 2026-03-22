@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { toLocalDateKey } from '../../utils/date'
 
-function StudyHeatmap({ sessions, loading, isDark = false, streakData }) {
+function StudyHeatmap({ sessions, loading, isDark = false, streakData, mode, semester }) {
   const currentYear = new Date().getFullYear()
   const [selectedYear, setSelectedYear] = useState(currentYear)
 
@@ -17,13 +17,32 @@ function StudyHeatmap({ sessions, loading, isDark = false, streakData }) {
   }, [sessions])
 
   const heatmap = useMemo(() => {
-    const displayYear = selectedYear
+    // const displayYear = selectedYear
 
-    const rangeStart = new Date(displayYear, 0, 1)
-    rangeStart.setHours(0, 0, 0, 0)
+    // const rangeStart = new Date(displayYear, 0, 1)
+    // rangeStart.setHours(0, 0, 0, 0)
 
-    const rangeEnd = new Date(displayYear, 11, 31)
-    rangeEnd.setHours(23, 59, 59, 999)
+    // const rangeEnd = new Date(displayYear, 11, 31)
+    // rangeEnd.setHours(23, 59, 59, 999)
+
+    let rangeStart
+    let rangeEnd
+
+    if (mode === 'semester' && semester?.start_date && semester?.end_date) {
+      rangeStart = new Date(`${semester.start_date}T00:00:00`)
+      rangeEnd = new Date(`${semester.end_date}T23:59:59`)
+    } else {
+      // GLOBAL (default behavior)
+      const displayYear = selectedYear
+
+      rangeStart = new Date(displayYear, 0, 1)
+      rangeStart.setHours(0, 0, 0, 0)
+
+      rangeEnd = new Date(displayYear, 11, 31)
+      rangeEnd.setHours(23, 59, 59, 999)
+    }
+
+
 
     const totals = new Map()
     const counts = new Map()
@@ -89,8 +108,9 @@ function StudyHeatmap({ sessions, loading, isDark = false, streakData }) {
       monthLabels,
       activeDays,
     }
-  }, [sessions, selectedYear])
-
+  // }, [sessions, selectedYear])
+  }, [sessions, selectedYear, mode, semester])
+  
   const resolveCellClass = (entry) => {
     if (!entry || !entry.inRange) return isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-200 border-slate-300'
     if (entry.minutes <= 0) return isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-200 border-slate-300'
@@ -179,7 +199,9 @@ function StudyHeatmap({ sessions, loading, isDark = false, streakData }) {
               </div>
             </div>
           </div>
-
+           
+           {/* right side years */}
+            {mode === 'global' && (
           <div className="w-20 flex-shrink-0 flex flex-col gap-2 mt-5">
             {availableYears.map((yr) => (
               <button
@@ -198,6 +220,10 @@ function StudyHeatmap({ sessions, loading, isDark = false, streakData }) {
               </button>
             ))}
           </div>
+            )}
+
+
+
         </div>
       )}
     </section>

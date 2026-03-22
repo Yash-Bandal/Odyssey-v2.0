@@ -9,6 +9,12 @@ import Last30DaysCard from '../components/analytics/Last30DaysCard'
 import YearlyStudyHoursCard from '../components/analytics/YearlyStudyHoursCard'
 
 function AnalyticsPage({ user, semester, sessionsVersion, isDark = false }) {
+
+  //=========global analytics======
+  const [mode, setMode] = useState('global') // 'semester' | 'global'
+
+
+  //===================================
   const [loading, setLoading] = useState(true)
   const [sessionRows, setSessionRows] = useState([])
   const [dailyData, setDailyData] = useState([])
@@ -30,6 +36,30 @@ function AnalyticsPage({ user, semester, sessionsVersion, isDark = false }) {
   const analyticsTick = isDark ? '#cbd5e1' : '#64748b'
 
   useEffect(() => {
+//=======================fix ranges
+    const today = new Date()
+
+      let rangeStart
+
+      if (mode === 'semester') {
+        const semesterStart = semester?.start_date
+          ? new Date(`${semester.start_date}T00:00:00`)
+          : null
+
+        rangeStart = semesterStart && !isNaN(semesterStart)
+          ? semesterStart
+          : new Date(today.getFullYear(), today.getMonth(), today.getDate() - 29)
+      } else {
+        // GLOBAL → last 365 days (GitHub style)
+        rangeStart = new Date(today)
+        rangeStart.setDate(today.getDate() - 364)
+      }
+
+      rangeStart.setHours(0, 0, 0, 0)
+
+
+//=======================================
+
     const load = async () => {
       setLoading(true)
       const today = new Date()
@@ -42,13 +72,36 @@ function AnalyticsPage({ user, semester, sessionsVersion, isDark = false }) {
           ? semesterStart
           : oneYearAgo
 
-      const { data, error } = await supabase
+          //============only 1 semester fetcher===================
+      // const { data, error } = await supabase
+      //   .from('sessions')
+      //   .select('start_time, duration_minutes, type')
+      //   .eq('user_id', user.id)
+      //   .eq('semester_id', semester.id)
+      //   .order('start_time', { ascending: true })
+      //   .limit(10000)
+      //========================================
+
+      let query = supabase
         .from('sessions')
         .select('start_time, duration_minutes, type')
         .eq('user_id', user.id)
-        .eq('semester_id', semester.id)
         .order('start_time', { ascending: true })
         .limit(10000)
+
+      // if (mode === 'semester') {
+      //   query = query.eq('semester_id', semester.id)
+      // }
+      if (mode === 'semester') {
+        query = query.eq('semester_id', semester.id)
+      } else {
+        // GLOBAL → include all semesters explicitly (important)
+        query = query.not('semester_id', 'is', null)
+      }
+
+
+      const { data, error } = await query
+
 
       if (error || !data) {
         setSessionRows([])
@@ -116,19 +169,57 @@ function AnalyticsPage({ user, semester, sessionsVersion, isDark = false }) {
         { name: 'Manual', minutes: Math.round(typeTotals.manual) },
       ]
 
+
+      //==================old cumulative working
+      // let running = 0
+      // const cumulativeRows = dailyRows.map((row) => {
+      //   running += Number(row.minutes) || 0
+      //   return {
+      //     day: row.day,
+      //     hours: Math.round((running / 60) * 10) / 10,
+      //   }
+      // })
+
+    //============global adaptive cumulative graph
       let running = 0
-      const cumulativeRows = dailyRows.map((row) => {
-        running += Number(row.minutes) || 0
+
+      // build daily map FIRST (works for both modes)
+      const dailyMap = new Map()
+
+      // sessionRows.forEach((session) => {
+      data.forEach((session) => {
+        const key = toLocalDateKey(session.start_time)
+        if (!key) return
+
+        const minutes = Number(session.duration_minutes) || 0
+        dailyMap.set(key, (dailyMap.get(key) || 0) + minutes)
+      })
+
+      // sort properly (IMPORTANT FIX)
+      const sortedDays = Array.from(dailyMap.keys()).sort(
+        (a, b) => new Date(a) - new Date(b)
+      )
+
+      // build cumulative (same as old logic)
+      const cumulativeRows = sortedDays.map((day) => {
+        running += dailyMap.get(day)
         return {
-          day: row.day,
+          day: day,
           hours: Math.round((running / 60) * 10) / 10,
         }
       })
+
+      //=================================
 
       setSessionRows(data)
       setDailyData(dailyRows)
       setMonthlyData(monthlyRows)
       setTypeData(sessionTypeRows)
+
+      // console.log('sessionRows:', sessionRows.length)
+      // console.log('cumulativeRows:', cumulativeRows.length)
+
+
       setCumulativeData(cumulativeRows)
       setTotals({
         totalMinutes: Math.round(totalMinutes),
@@ -139,7 +230,11 @@ function AnalyticsPage({ user, semester, sessionsVersion, isDark = false }) {
     }
 
     load()
-  }, [user.id, semester.id, semester.start_date, sessionsVersion])
+
+
+
+
+  }, [user.id, semester.id, semester.start_date, sessionsVersion, mode])
 
   const streakData = useMemo(() => {
     if (!sessionRows.length) {
@@ -188,11 +283,54 @@ function AnalyticsPage({ user, semester, sessionsVersion, isDark = false }) {
 
   return (
     <div className="space-y-6">
+
+
+
+      {/* //================ Global analytics ======================= */}
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-semibold">Analytics</h2>
+
+        <div className="flex rounded-xl border border-slate-200 overflow-hidden">
+          <button
+            onClick={() => setMode('global')}
+            className={`px-4 py-2 text-sm font-medium ${mode === 'global'
+              ? 'bg-sky-500 text-white'
+              : 'bg-white text-slate-600'
+              }`}
+          >
+            Global
+          </button>
+
+          <button
+            onClick={() => setMode('semester')}
+            className={`px-4 py-2 text-sm font-medium ${mode === 'semester'
+                ? 'bg-sky-500 text-white'
+                : 'bg-white text-slate-600'
+              }`}
+          >
+            Semester
+          </button>
+
+
+        </div>
+      </div>
+
+      {/* //======================================= */}
+
+
+
       <TopStats totals={totals} streakData={streakData} isDark={isDark} />
 
       <div className="flex gap-6">
         <div className="flex-1">
-          <StudyHeatmap sessions={sessionRows} loading={loading} isDark={isDark} streakData={streakData} />
+          <StudyHeatmap
+            sessions={sessionRows}
+            loading={loading}
+            isDark={isDark}
+            streakData={streakData}
+            mode={mode}
+            semester={semester}
+          />
         </div>
       </div>
 
@@ -213,6 +351,9 @@ function AnalyticsPage({ user, semester, sessionsVersion, isDark = false }) {
           analyticsMutedClass={analyticsMutedClass}
           analyticsGridStroke={analyticsGridStroke}
           analyticsTick={analyticsTick}
+
+          mode={mode}
+
         />
       </div>
 
@@ -224,6 +365,8 @@ function AnalyticsPage({ user, semester, sessionsVersion, isDark = false }) {
         analyticsMutedClass={analyticsMutedClass}
         analyticsGridStroke={analyticsGridStroke}
         analyticsTick={analyticsTick}
+        mode={mode}
+
       />
 
       <YearlyStudyHoursCard
@@ -234,6 +377,8 @@ function AnalyticsPage({ user, semester, sessionsVersion, isDark = false }) {
         analyticsMutedClass={analyticsMutedClass}
         analyticsGridStroke={analyticsGridStroke}
         analyticsTick={analyticsTick}
+        mode={mode}
+
       />
     </div>
   )

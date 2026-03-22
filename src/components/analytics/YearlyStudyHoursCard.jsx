@@ -8,10 +8,20 @@ function YearlyStudyHoursCard({
   analyticsMutedClass,
   analyticsGridStroke,
   analyticsTick,
+  mode,
 }) {
   return (
     <section className={analyticsCardClass}>
-      <h2 className={['text-lg font-semibold mb-4', analyticsTitleClass].join(' ')}>Yearly Study Hours (Jan-Dec)</h2>
+      {/* <h2 className={['text-lg font-semibold mb-4', analyticsTitleClass].join(' ')}>Yearly Study Hours (Jan-Dec)</h2> */}
+    <h2 className={['text-lg font-semibold mb-4', analyticsTitleClass].join(' ')}>
+        {mode === 'global' ? 'Yearly Study Hours (All Time)' : 'Yearly Study Hours'}
+      </h2>
+
+      {/* <p className="text-sm text-slate-500">
+        {mode === 'global'
+          ? 'Showing insights across all semesters'
+          : 'Showing insights for current semester'}
+      </p> */}
       <div className="h-72">
         {loading ? (
           <div className={['h-full flex items-center justify-center text-sm', analyticsMutedClass].join(' ')}>Loading analytics...</div>

@@ -110,7 +110,7 @@ function SessionHistory({
                     </div>
 
                     <div className={['text-sm', sessionsMutedTextClass].join(' ')}>
-                      {date.toLocaleDateString()} Ã‚Â·{' '}
+                      {date.toLocaleDateString()} : {' '}
                       {date.toLocaleTimeString([], {
                         hour: '2-digit',
                         minute: '2-digit',

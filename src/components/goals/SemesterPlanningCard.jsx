@@ -13,6 +13,10 @@ function SemesterPlanningCard({
   handleSave,
   saving,
   saveButtonClass,
+
+
+  handleStartNewSemester,
+  isPastSemester,
 }) {
   return (
     <section className={cardClass}>
@@ -24,6 +28,8 @@ function SemesterPlanningCard({
             value={form.startDate}
             onChange={(e) => handleChange('startDate', e.target.value)}
             className={inputClass}
+            // disabled={isPastSemester}
+
           />
         </div>
 
@@ -34,6 +40,7 @@ function SemesterPlanningCard({
             value={form.endDate}
             onChange={(e) => handleChange('endDate', e.target.value)}
             className={inputClass}
+            // disabled={isPastSemester}
           />
         </div>
 
@@ -45,6 +52,7 @@ function SemesterPlanningCard({
             onChange={(e) => handleChange('totalHours', e.target.value)}
             className={inputClass}
             placeholder="e.g. 300"
+            // disabled={isPastSemester}
           />
         </div>
       </div>
@@ -77,11 +85,36 @@ function SemesterPlanningCard({
         </div>
       )}
 
-      <div className="flex justify-end">
+      {/* <div className="flex justify-end">
         <button type="button" onClick={handleSave} disabled={saving} className={saveButtonClass}>
           {saving ? 'Saving...' : 'Save All Changes'}
         </button>
+      </div> */}
+
+
+      <div className="flex justify-end gap-3">
+        <button
+          type="button"
+          onClick={handleSave}
+          // disabled={saving || isPastSemester}
+          disabled={saving}
+          className={saveButtonClass}
+        >
+          {saving ? 'Saving...' : 'Save All Changes'}
+          {/* {isPastSemester ? 'Past Semester (Locked)' : saving ? 'Saving...' : 'Update Semester'} */}
+        </button>
+
+        <button
+          type="button"
+          onClick={handleStartNewSemester}
+          disabled={saving}
+          className="px-6 py-3 rounded-xl font-semibold bg-emerald-500 text-white hover:bg-emerald-600 transition shadow-sm"
+        >
+          Start New Semester
+        </button>
       </div>
+
+
     </section>
   )
 }

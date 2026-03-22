@@ -14,15 +14,26 @@ function SubjectsCard({
   subjectNumberInputClass,
   handleDeleteSubject,
   deleteButtonClass,
+// handleSaveSubjects ,
+  isSavingSubjects
 }) {
   return (
     <section className={cardClass}>
       <div className="flex items-center justify-between">
+       
         <div>
-          <h2 className={subjectHeaderTitleClass}>Subjects</h2>
+          <div className='relative flex gap-6'>
+            <h2 className={subjectHeaderTitleClass}>Subjects</h2>
+            {isSavingSubjects && (
+              <span className=" mt-2 text-xs text-slate-400">Saving...</span>
+            )}
+          </div>
+
           <p className={subjectHeaderMutedClass}>
             Allocate hours and weightage for each subject.
           </p>
+
+
         </div>
 
         <button type="button" onClick={handleAddSubject} className={addButtonClass}>
@@ -85,6 +96,15 @@ function SubjectsCard({
           </div>
         ))}
       </div>
+
+      {/* <button
+        onClick={handleSaveSubjects}
+        className="px-5 py-2 rounded-xl bg-emerald-500 text-white hover:bg-emerald-600"
+      >
+        Save Subjects
+      </button> */}
+
+
     </section>
   )
 }
