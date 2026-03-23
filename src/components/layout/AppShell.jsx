@@ -96,7 +96,7 @@ function AppShell({
       {/* Desktop Sidebar – full height, always visible on lg+ */}
       <aside
         className={[
-          'hidden lg:flex lg:flex-col transition-all duration-300',
+          'hidden lg:flex lg:flex-col transition-all duration-300 ',
           isDark ? 'bg-[#0f1118] text-white' : 'bg-[#0b0c10] text-white',
           desktopSidebarOpen ? 'lg:w-64' : 'lg:w-20',
           'h-screen overflow-hidden',
@@ -178,7 +178,7 @@ function AppShell({
       {/* Mobile Sidebar Overlay */}
       <div
         className={[
-          'fixed inset-0 z-50 md:hidden transition-opacity duration-300',
+          'fixed inset-0 md:hidden transition-opacity duration-300 z-[200]',
           mobileNavOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none',
         ].join(' ')}
       >
@@ -262,7 +262,7 @@ function AppShell({
       ].join(' ')}>
 
         <header className={[
-          'border-b backdrop-blur z-[1000]',
+          'border-b backdrop-blur z-[100]',
           isDark ? 'border-slate-800 bg-slate-900/80' : 'border-slate-200 bg-white/80',
         ].join(' ')}>
           <div className="flex items-center justify-between px-4 sm:px-6 h-16 gap-3">
