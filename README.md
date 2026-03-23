@@ -2,7 +2,7 @@
 
 ---
 > [!Tip]
-> # Gamify studying, make progress visible.
+> # Gamify studying, make progress visible
 ---
 
 Odyssey is a **Study Planning App** for rewarding consistency, semester-based planning, session tracking, and analytics.
