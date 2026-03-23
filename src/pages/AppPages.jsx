@@ -13,7 +13,7 @@ function StatCard({ label, value, sublabel, accent, isDark = false }) {
     Today: Sun,
     'This week': CalendarDays,
     'This month': CalendarDays,
-    'Current streak': Flame,
+    'Active streak': Flame,
     Sessions: Timer,
     'Total Time': Clock3,
     'Avg / Session': BarChart3,

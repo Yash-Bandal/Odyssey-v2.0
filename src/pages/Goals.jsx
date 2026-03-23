@@ -8,6 +8,8 @@ import SubjectsCard from '../components/goals/SubjectsCard'
 import GoalsNotesCard from '../components/goals/GoalsNotesCard'
 
 import { useSemesterCalculations } from '../hooks/useSemesterCalculations'
+import { toDateOnly } from '../utils/dateUtils'
+import { validateSemesterUpdate } from '../utils/semesterValidation'
 
 function GoalsPage({ user, semester, onSemesterChanged, isDark = false }) {
   //==================All semesters===============
@@ -15,8 +17,10 @@ function GoalsPage({ user, semester, onSemesterChanged, isDark = false }) {
 
 
   const [allSemesters, setAllSemesters] = useState([])
-  const isPastSemester = new Date() > new Date(semester.end_date)
-
+  // const isPastSemester = new Date() > new Date(semester.end_date)
+  const isPastSemester =
+    toDateOnly(new Date()) > toDateOnly(semester.end_date)
+  const [showAllSemesters, setShowAllSemesters] = useState(false)
 
   useEffect(() => {
     if (!user?.id) return
@@ -96,40 +100,20 @@ function GoalsPage({ user, semester, onSemesterChanged, isDark = false }) {
     }
 
 
+    const error = await validateSemesterUpdate({ form, semester })
+
+    if (error) {
+      await Swal.fire({
+        icon: "error",
+        title: error.title,
+        text: error.text,
+      })
+      return
+    }
+
     ///================== old date anomaly ================
 
-    const oldStart = new Date(semester.start_date)
 
-
-    const newEnd = new Date(form.endDate)
-
-    // ❌ start date backward
-
-    const today = new Date()
-    const todayOnly = new Date(today.toDateString())
-    const newStart = new Date(form.startDate)
-
-    // ❌ ONLY block past dates
-    if (newStart < todayOnly) {
-      await Swal.fire({
-        icon: "error",
-        title: "Invalid Start Date",
-        text: "Start date cannot be in the past.",
-      })
-      return
-    }
-    // ❌ end date in past
-    if (newEnd < new Date(today.toDateString())) {
-      await Swal.fire({
-        icon: "error",
-        title: "Invalid End Date",
-        text: "End date cannot be in the past.",
-      })
-      return
-    }
-
-
-    //=================================
     const result = await Swal.fire({
       title: "Save changes?",
       text: "This will update semester settings and subjects.",
@@ -228,16 +212,26 @@ function GoalsPage({ user, semester, onSemesterChanged, isDark = false }) {
 
     //============prevent anomalies
 
-    const today = new Date()
+    // const today = new Date()
+    const today = toDateOnly(new Date())
+
     const todayOnly = new Date(today.toDateString())
     const newStart = new Date(form.startDate)
 
-    const isActiveSemester = allSemesters.some((sem) => {
-      const start = new Date(sem.start_date)
-      const end = new Date(sem.end_date)
+    // const isActiveSemester = allSemesters.some((sem) => {
+    //   const start = new Date(sem.start_date)
+    //   const end = new Date(sem.end_date)
 
-      return start <= today && today <= end
+    //   return start <= today && today <= end
+    // })
+
+    const isActiveSemester = allSemesters.some((sem) => {
+      return (
+        toDateOnly(sem.start_date) <= today &&
+        today <= toDateOnly(sem.end_date)
+      )
     })
+
 
 
     // ❌ only block past dates
@@ -602,7 +596,9 @@ function GoalsPage({ user, semester, onSemesterChanged, isDark = false }) {
 
 
 
-
+  const visibleSemesters = showAllSemesters
+    ? allSemesters
+    : allSemesters.slice(0, 1)
 
   // ================= UI =================
   return (
@@ -652,33 +648,66 @@ function GoalsPage({ user, semester, onSemesterChanged, isDark = false }) {
       />
 
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold">All Semesters</h3>
+        <div className="flex items-center justify-between">
+          <h3 className={`text-lg font-semibold ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
+            All Semesters
+          </h3>
 
-        {allSemesters.map((sem) => {
-          const today = new Date()
+          {allSemesters.length > 1 && (
+            <button
+              onClick={() => setShowAllSemesters(prev => !prev)}
+              className={`text-sm font-medium transition ${isDark
+                  ? 'text-sky-400 hover:text-sky-300'
+                  : 'text-sky-600 hover:text-sky-700'
+                }`}
+            >
+              {showAllSemesters ? 'Show Less' : 'Show More'}
+            </button>
+          )}
+        </div>
+
+        {visibleSemesters.map((sem) => {
+          // const today = new Date()
+
+          // const isActive =
+          //   new Date(sem.start_date) <= today &&
+          //   today <= new Date(sem.end_date)
+
+          const today = toDateOnly(new Date())
 
           const isActive =
-            new Date(sem.start_date) <= today &&
-            today <= new Date(sem.end_date)
+            toDateOnly(sem.start_date) <= today &&
+            today <= toDateOnly(sem.end_date)
 
           return (
-
             <div
               key={sem.id}
-              className="p-4 rounded-xl border border-slate-200 bg-white"
+              className={`rounded-2xl p-5 border transition ${isDark
+                  ? 'bg-slate-900 border-slate-800 hover:bg-slate-800'
+                  : 'bg-white border-slate-200 hover:bg-slate-50'
+                }`}
             >
               <div className="flex justify-between items-center">
-                <div>
-                  <p className="font-medium">
+                {/* LEFT */}
+                <div className="space-y-1">
+                  <p className={`font-medium ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
                     {sem.start_date} → {sem.end_date}
                   </p>
-                  <p className="text-sm text-slate-500">
+
+                  <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                     Goal: {sem.total_goal_hours}h
                   </p>
                 </div>
 
-                <div className="text-sm text-slate-400">
-                  {/* {sem.id === semester.id ? 'Current' : 'Past'} */}
+                {/* RIGHT */}
+                <div
+                  className={`text-xs px-3 py-1 rounded-full font-medium ${isActive
+                      ? 'bg-emerald-500/10 text-emerald-500'
+                      : isDark
+                        ? 'bg-slate-800 text-slate-400'
+                        : 'bg-slate-100 text-slate-500'
+                    }`}
+                >
                   {isActive ? 'Current' : 'Past'}
                 </div>
               </div>
@@ -686,7 +715,6 @@ function GoalsPage({ user, semester, onSemesterChanged, isDark = false }) {
           )
         })}
       </div>
-
 
 
       <GoalsNotesCard

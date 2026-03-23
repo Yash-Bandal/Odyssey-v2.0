@@ -13,6 +13,21 @@ function AnalyticsPage({ user, semester, sessionsVersion, isDark = false }) {
   //=========global analytics======
   const [mode, setMode] = useState('global') // 'semester' | 'global'
 
+  const [comparison, setComparison] = useState({
+    currentHours: 0,
+    prevHours: 0,
+    improvement: 0,
+  })
+
+  const [insights, setInsights] = useState({
+    consistency: 0,
+    missedDays: 0,
+    avgSessionMinutes: 0,
+    peakTime: '',
+    bestDay: '',
+    lowDay: '',
+  })
+
 
   //===================================
   const [loading, setLoading] = useState(true)
@@ -118,6 +133,199 @@ function AnalyticsPage({ user, semester, sessionsVersion, isDark = false }) {
         return
       }
 
+      // ================= SEMESTER COMPARISON =================
+
+      // Only run in semester mode
+      let comparisonData = {
+        currentHours: 0,
+        prevHours: 0,
+        improvement: 0,
+      }
+
+      if (mode === 'semester') {
+        // 1. get previous semester
+        const { data: prevSemester } = await supabase
+          .from('semesters')
+          .select('*')
+          .eq('user_id', user.id)
+          .lt('end_date', semester.start_date)
+          .order('end_date', { ascending: false })
+          .limit(1)
+          .single()
+
+        if (prevSemester) {
+          // 2. fetch its sessions
+          const { data: prevSessions } = await supabase
+            .from('sessions')
+            .select('duration_minutes')
+            .eq('user_id', user.id)
+            .eq('semester_id', prevSemester.id)
+
+          const prevRows = prevSessions || []
+
+          // 3. compute current
+          const currentMinutes = data.reduce(
+            (sum, s) => sum + (Number(s.duration_minutes) || 0),
+            0
+          )
+
+          // 4. compute previous
+          const prevMinutes = prevRows.reduce(
+            (sum, s) => sum + (Number(s.duration_minutes) || 0),
+            0
+          )
+
+          const currentHours = currentMinutes / 60
+          const prevHours = prevMinutes / 60
+
+          let improvement = 0
+          if (prevHours > 0) {
+            improvement = ((currentHours - prevHours) / prevHours) * 100
+          }
+
+          comparisonData = {
+            currentHours,
+            prevHours,
+            improvement,
+          }
+        }
+      }
+
+      // set state
+      setComparison(comparisonData)
+
+      // =====================================================
+      // ================= INSIGHTS =================
+
+      // 1. Build day map (reuse pattern)
+      const dayTotalsMap = new Map()
+
+      data.forEach((session) => {
+        const key = toLocalDateKey(session.start_time)
+        const minutes = Number(session.duration_minutes) || 0
+
+        if (!key) return
+        dayTotalsMap.set(key, (dayTotalsMap.get(key) || 0) + minutes)
+      })
+
+      // 2. Consistency + missed days
+      let totalDays = 0
+      let activeDays = 0
+
+      const startDate = new Date(rangeStart)
+      const endDate = new Date()
+
+      startDate.setHours(0, 0, 0, 0)
+      endDate.setHours(0, 0, 0, 0)
+
+      const cursor = new Date(startDate)
+
+      while (cursor <= endDate) {
+        totalDays += 1
+        const key = toLocalDateKey(cursor)
+
+        if ((dayTotalsMap.get(key) || 0) > 0) {
+          activeDays += 1
+        }
+
+        cursor.setDate(cursor.getDate() + 1)
+      }
+
+      const consistency = totalDays > 0 ? (activeDays / totalDays) * 100 : 0
+      const missedDays = totalDays - activeDays
+
+      // 3. Session length insight
+      let totalMinutes = 0
+      data.forEach((s) => {
+        totalMinutes += Number(s.duration_minutes) || 0
+      })
+
+      const avgSessionMinutes =
+        data.length > 0 ? totalMinutes / data.length : 0
+
+      // 4. Time distribution
+      const buckets = {
+        morning: 0,
+        afternoon: 0,
+        evening: 0,
+        night: 0,
+      }
+
+      data.forEach((session) => {
+        const date = new Date(session.start_time)
+        const hour = date.getHours()
+        const minutes = Number(session.duration_minutes) || 0
+
+        if (hour >= 5 && hour < 12) buckets.morning += minutes
+        else if (hour < 17) buckets.afternoon += minutes
+        else if (hour < 21) buckets.evening += minutes
+        else buckets.night += minutes
+      })
+
+      // find peak
+      let peakTime = 'None'
+      let max = 0
+
+      Object.entries(buckets).forEach(([key, value]) => {
+        if (value > max) {
+          max = value
+          peakTime = key
+        }
+      })
+
+
+      // 5. Best / low Day (based on avg minutes)
+
+      const weekdayTotals = [0, 0, 0, 0, 0, 0, 0]
+      const weekdayCounts = [0, 0, 0, 0, 0, 0, 0]
+
+      data.forEach((session) => {
+        const date = new Date(session.start_time)
+        const day = date.getDay() // 0 = Sunday
+
+        const minutes = Number(session.duration_minutes) || 0
+
+        weekdayTotals[day] += minutes
+        weekdayCounts[day] += 1
+      })
+
+      // avg per day
+      const weekdayAvg = weekdayTotals.map((total, i) =>
+        weekdayCounts[i] > 0 ? total / weekdayCounts[i] : 0
+      )
+
+      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
+      let bestDay = 'None'
+      let lowDay = 'None'
+
+      let maxD = 0
+      let min = Infinity
+
+      weekdayAvg.forEach((value, i) => {
+        if (value > maxD) {
+          maxD = value
+          bestDay = days[i]
+        }
+
+        if (value > 0 && value < min) {
+          min = value
+          lowDay = days[i]
+        }
+      })
+
+      // save
+      setInsights({
+        consistency,
+        missedDays,
+        avgSessionMinutes,
+        peakTime,
+        bestDay,
+        lowDay,
+      })
+
+      // ============================================
+
       const start = new Date(today)
       start.setDate(today.getDate() - 29)
       start.setHours(0, 0, 0, 0)
@@ -132,7 +340,7 @@ function AnalyticsPage({ user, semester, sessionsVersion, isDark = false }) {
       const monthlyTotals = Array(12).fill(0)
       const typeTotals = { pomodoro: 0, stopwatch: 0, manual: 0 }
       const currentYear = today.getFullYear()
-      let totalMinutes = 0
+      let totalSessionMinutes = 0
 
       data.forEach((session) => {
         const duration = Number(session.duration_minutes) || 0
@@ -149,7 +357,7 @@ function AnalyticsPage({ user, semester, sessionsVersion, isDark = false }) {
         if (typeTotals[session.type] !== undefined) {
           typeTotals[session.type] += duration
         }
-        totalMinutes += duration
+        totalSessionMinutes += duration
       })
 
       const dailyRows = Array.from(dayMap.entries()).map(([key, minutes]) => ({
@@ -211,6 +419,8 @@ function AnalyticsPage({ user, semester, sessionsVersion, isDark = false }) {
 
       //=================================
 
+
+      
       setSessionRows(data)
       setDailyData(dailyRows)
       setMonthlyData(monthlyRows)
@@ -288,14 +498,26 @@ function AnalyticsPage({ user, semester, sessionsVersion, isDark = false }) {
 
       {/* //================ Global analytics ======================= */}
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Analytics</h2>
 
-        <div className="flex rounded-xl border border-slate-200 overflow-hidden">
+        <h2 className={`text-xl font-semibold ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
+          Analytics
+        </h2>
+
+        <div
+          className={`flex p-1 rounded-xl ${isDark
+              ? 'bg-slate-800 border border-slate-700'
+              : 'bg-slate-100 border border-slate-200'
+            }`}
+        >
           <button
             onClick={() => setMode('global')}
-            className={`px-4 py-2 text-sm font-medium ${mode === 'global'
-              ? 'bg-sky-500 text-white'
-              : 'bg-white text-slate-600'
+            className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-all ${mode === 'global'
+                ? isDark
+                  ? 'bg-slate-700 text-white shadow-sm'
+                  : 'bg-white text-slate-900 shadow-sm'
+                : isDark
+                  ? 'text-slate-400 hover:text-slate-200'
+                  : 'text-slate-500 hover:text-slate-700'
               }`}
           >
             Global
@@ -303,23 +525,200 @@ function AnalyticsPage({ user, semester, sessionsVersion, isDark = false }) {
 
           <button
             onClick={() => setMode('semester')}
-            className={`px-4 py-2 text-sm font-medium ${mode === 'semester'
-                ? 'bg-sky-500 text-white'
-                : 'bg-white text-slate-600'
+            className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-all ${mode === 'semester'
+                ? isDark
+                  ? 'bg-slate-700 text-white shadow-sm'
+                  : 'bg-white text-slate-900 shadow-sm'
+                : isDark
+                  ? 'text-slate-400 hover:text-slate-200'
+                  : 'text-slate-500 hover:text-slate-700'
               }`}
           >
             Semester
           </button>
-
-
         </div>
+
       </div>
 
       {/* //======================================= */}
 
 
 
-      <TopStats totals={totals} streakData={streakData} isDark={isDark} />
+      <TopStats
+        totals={totals}
+        streakData={streakData}
+        insights={insights}   
+        isDark={isDark}
+      />
+
+      {mode === 'semester' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+
+
+          <div className="xl:col-span-2">
+            <div className={`${analyticsCardClass} p-5 flex flex-col gap-5`}>
+
+              {/* Header */}
+              <div className="flex items-center justify-between">
+                <h2 className={analyticsTitleClass}>Semester Comparison</h2>
+
+                <span
+                  className={`text-xs px-2 py-1 rounded-full font-medium ${comparison.currentHours >= comparison.prevHours
+                    ? 'bg-emerald-500/10 text-emerald-500'
+                    : 'bg-rose-500/10 text-rose-500'
+                    }`}
+                >
+                  {comparison.currentHours >= comparison.prevHours
+                    ? 'Doing Better'
+                    : 'Needs Focus'}
+                </span>
+              </div>
+
+              {/* Main Hours */}
+              <div className="grid grid-cols-2 gap-4">
+
+                <div>
+                  <p className="text-xs text-slate-400">Current Semester</p>
+                  <p className="text-2xl font-semibold">
+                    {comparison.currentHours.toFixed(1)}h
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-xs text-slate-400">Previous Semester</p>
+                  <p className="text-2xl font-semibold text-slate-400">
+                    {comparison.prevHours.toFixed(1)}h
+                  </p>
+                </div>
+              </div>
+
+              {/* Difference */}
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-slate-400">Difference</span>
+
+                <span
+                  className={`font-medium ${comparison.currentHours >= comparison.prevHours
+                    ? 'text-emerald-500'
+                    : 'text-rose-500'
+                    }`}
+                >
+                  {comparison.currentHours >= comparison.prevHours ? '+' : '-'}
+                  {Math.abs(
+                    comparison.currentHours - comparison.prevHours
+                  ).toFixed(1)}h
+                </span>
+              </div>
+
+              {/* Daily Average (assuming ~120 days semester, tweak if needed) */}
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-slate-400">Daily Avg</span>
+
+                <div className="flex gap-4">
+                  <span>
+                    {(
+                      comparison.currentHours / 120
+                    ).toFixed(1)}h
+                  </span>
+                  <span className="text-slate-400">
+                    vs {(
+                      comparison.prevHours / 120
+                    ).toFixed(1)}h
+                  </span>
+                </div>
+              </div>
+
+              {/* Visual Bar Comparison */}
+              {/* <div className="flex flex-col gap-2">
+                <div className="text-xs text-slate-400">Relative Effort</div>
+
+                <div className="flex gap-2 h-2 w-full">
+                  <div
+                    className="bg-sky-500 rounded-full"
+                    style={{
+                      width: `${(comparison.currentHours /
+                        Math.max(
+                          comparison.currentHours,
+                          comparison.prevHours
+                        )) *
+                        100
+                        }%`,
+                    }}
+                  />
+                  <div
+                    className="bg-slate-300 dark:bg-slate-700 rounded-full"
+                    style={{
+                      width: `${(comparison.prevHours /
+                        Math.max(
+                          comparison.currentHours,
+                          comparison.prevHours
+                        )) *
+                        100
+                        }%`,
+                    }}
+                  />
+                </div>
+              </div> */}
+
+            </div>
+          </div>
+
+
+{/* the stack  */}
+
+          <div className="xl:col-span-1 flex flex-col gap-6">
+
+            {/* Missed Days */}
+            <div className={`${analyticsCardClass} p-5 flex-1 flex flex-col justify-center`}>
+              <p className={analyticsMutedClass}>Missed Days</p>
+              <p className="text-2xl font-semibold">
+                {insights.missedDays}
+              </p>
+            </div>
+
+            {/* Peak Time */}
+            <div className={`${analyticsCardClass} p-5 flex-1 flex flex-col justify-center`}>
+              <p className={analyticsMutedClass}>Peak Time</p>
+              <p className="text-2xl font-semibold capitalize">
+                {insights.peakTime}
+              </p>
+            </div>
+
+          </div>
+
+          {/* Best / low Day */}
+          <div className={`${analyticsCardClass} p-5 flex flex-col gap-4`}>
+
+            <p className={analyticsMutedClass}>Best / Low Day</p>
+
+            <div className="flex flex-col gap-3 text-sm">
+
+              {/* Best */}
+              <div className="flex flex-col">
+                <span className="text-xs text-slate-400">Best</span>
+                <span className="text-emerald-500 font-semibold text-base">
+                  {insights.bestDay}
+                </span>
+              </div>
+
+              {/* Divider */}
+              <div className="border-t  border-slate-210 dark:border-slate-400" />
+
+              {/* low */}
+              <div className="flex flex-col">
+                <span className="text-xs text-slate-400">Low</span>
+                <span className="text-rose-500 font-semibold text-base">
+                  {insights.lowDay}
+                </span>
+              </div>
+
+            </div>
+          </div>
+
+
+        </div>
+      )}
+
+      
 
       <div className="flex gap-6">
         <div className="flex-1">
@@ -334,6 +733,9 @@ function AnalyticsPage({ user, semester, sessionsVersion, isDark = false }) {
         </div>
       </div>
 
+
+
+
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         <SessionTypeMixCard
           loading={loading}
@@ -341,7 +743,9 @@ function AnalyticsPage({ user, semester, sessionsVersion, isDark = false }) {
           analyticsCardClass={analyticsCardClass}
           analyticsTitleClass={analyticsTitleClass}
           analyticsMutedClass={analyticsMutedClass}
+          isDark={isDark}  
         />
+
 
         <CumulativeHoursCard
           loading={loading}
@@ -353,6 +757,7 @@ function AnalyticsPage({ user, semester, sessionsVersion, isDark = false }) {
           analyticsTick={analyticsTick}
 
           mode={mode}
+          isDark={isDark}  
 
         />
       </div>
@@ -366,6 +771,7 @@ function AnalyticsPage({ user, semester, sessionsVersion, isDark = false }) {
         analyticsGridStroke={analyticsGridStroke}
         analyticsTick={analyticsTick}
         mode={mode}
+        isDark={isDark}  
 
       />
 
@@ -378,8 +784,11 @@ function AnalyticsPage({ user, semester, sessionsVersion, isDark = false }) {
         analyticsGridStroke={analyticsGridStroke}
         analyticsTick={analyticsTick}
         mode={mode}
+        isDark={isDark}  
 
       />
+
+      
     </div>
   )
 }

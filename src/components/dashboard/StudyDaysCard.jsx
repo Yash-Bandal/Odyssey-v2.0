@@ -61,12 +61,12 @@ function StudyDaysCard({
           </span>
         </div>
 
-        <div className="flex items-baseline justify-between">
+        {/* <div className="flex items-baseline justify-between">
           <span className={dashboardMutedTextClass}>Total Studied Upto Now</span>
           <span className={dashboardStrongTextClass}>
             {summary.totalLifetimeHours?.toFixed(1)} h
           </span>
-        </div>
+        </div> */}
 
 
       </div>

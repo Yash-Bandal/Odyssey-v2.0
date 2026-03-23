@@ -57,8 +57,10 @@ function DashboardPlaceholder({ user, semester, sessionsVersion, isDark = false 
       //  GLOBAL (lifetime sessions)
       const { data: allSessions } = await supabase
         .from('sessions')
-        .select('duration_minutes')
+        // .select('duration_minutes')
+        .select('start_time, duration_minutes')
         .eq('user_id', user.id)
+
 
 
       const { data, error } = await supabase
@@ -69,29 +71,56 @@ function DashboardPlaceholder({ user, semester, sessionsVersion, isDark = false 
         .order('start_time', { ascending: false })
         .limit(1000)
 
+
+      const globalDayTotals = new Map()
       let totalLifetimeMinutes = 0
 
-      allSessions?.forEach((session) => {
-        totalLifetimeMinutes += Number(session.duration_minutes) || 0
-      })
+        allSessions?.forEach((session) => {
+          const key = toLocalDateKey(session.start_time)
+          const minutes = Number(session.duration_minutes) || 0
+
+          totalLifetimeMinutes += minutes
+
+          if (!key) return
+          globalDayTotals.set(key, (globalDayTotals.get(key) || 0) + minutes)
+        })
 
       const totalLifetimeHours = totalLifetimeMinutes / 60
       //====================================================
 
-      const semesterStart = new Date(semester.start_date)
-      const semesterEnd = new Date(semester.end_date)
-      const today = new Date()
+
+      // this cosiders last day ends at midnight 00:00
+      // const semesterStart = new Date(semester.start_date)
+      // const semesterEnd = new Date(semester.end_date)
+      // const today = new Date() 
+
+      // Last date ends at 23:59
+      const toDateOnly = (date) => new Date(new Date(date).toDateString())
+
+      const semesterStart = toDateOnly(semester.start_date)
+      const semesterEnd = toDateOnly(semester.end_date)
+      const today = toDateOnly(new Date())
+
+
       const totalGoalHours = Number(semester.total_goal_hours) || 0
 
       let totalStudiedMinutes = 0
-      data.forEach((session) => {
+        data.forEach((session) => { //current semester completed hours only
         totalStudiedMinutes += Number(session.duration_minutes) || 0
       })
+      //   (data || []).forEach((session) => {
+      //   totalStudiedMinutes += Number(session.duration_minutes) || 0
+      // })
 
       const totalStudiedHours = totalStudiedMinutes / 60
       const remainingHours = Math.max(totalGoalHours - totalStudiedHours, 0)
       const oneDayMs = 1000 * 60 * 60 * 24
-      const remainingDays = semesterEnd > today ? Math.ceil((semesterEnd - today) / oneDayMs) : 0
+      // const remainingDays = semesterEnd > today ? Math.ceil((semesterEnd - today) / oneDayMs) : 0
+      const remainingDays =
+        today > semesterEnd
+          ? 0
+          : Math.floor((semesterEnd - today) / oneDayMs) + 1
+
       const requiredDailyHours = remainingDays > 0 ? remainingHours / remainingDays : 0
 
 
@@ -167,7 +196,27 @@ function DashboardPlaceholder({ user, semester, sessionsVersion, isDark = false 
       }
      //========================================================
 
-      if (error || !data) {
+      // if (error || !data) {
+      //   setSummary({
+      //     todayMinutes: 0,
+      //     weekMinutes: 0,
+      //     monthMinutes: 0,
+      //     totalSessions: 0,
+      //     streakDays: 0,
+      //     activeDays: 0,
+      //     aboveTargetDays: 0,
+      //     dailyAvgMinutes: 0,
+      //     thisWeek: [0, 0, 0, 0, 0, 0, 0],
+      //     lastWeek: [0, 0, 0, 0, 0, 0, 0],
+      //     weekdayAvg: [0, 0, 0, 0, 0, 0, 0],
+      //   })
+      //   setRewardBadges([])
+      //   return
+      // }
+
+      if (error) {
+        console.error(error)
+
         setSummary({
           todayMinutes: 0,
           weekMinutes: 0,
@@ -181,9 +230,16 @@ function DashboardPlaceholder({ user, semester, sessionsVersion, isDark = false 
           lastWeek: [0, 0, 0, 0, 0, 0, 0],
           weekdayAvg: [0, 0, 0, 0, 0, 0, 0],
         })
+
         setRewardBadges([])
         return
       }
+
+      if (!data) {
+        return
+      }
+
+
 
       const now = new Date()
       const todayKey = toLocalDateKey(now)
@@ -199,7 +255,8 @@ function DashboardPlaceholder({ user, semester, sessionsVersion, isDark = false 
       const weekdayTotals = [0, 0, 0, 0, 0, 0, 0]
       const weekdayCounts = [0, 0, 0, 0, 0, 0, 0]
 
-      data.forEach((session) => {
+      // data.forEach((session) => { //current semetser
+      allSessions?.forEach((session) => { //global
         const duration = Number(session.duration_minutes) || 0
         const date = new Date(session.start_time)
         const key = toLocalDateKey(date)
@@ -245,7 +302,10 @@ function DashboardPlaceholder({ user, semester, sessionsVersion, isDark = false 
         }
       }
 
-      const minutesForKey = (key) => dayTotals.get(key) || 0
+      const minutesForKey = (key) => globalDayTotals.get(key) || 0
+      // const minutesForKey = (key) => dayTotals.get(key) || 0
+
+
       const thisWeek = []
       const lastWeek = []
       const weekStart = new Date(startOfWeek)

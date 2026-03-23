@@ -27,7 +27,7 @@ function TopStats({ summary, formatHoursMinutes, isDark }) {
       />
 
       <StatCard
-        label="Current streak"
+        label="Active streak"
         value={`${summary.streakDays} day${summary.streakDays === 1 ? '' : 's'}`}
         sublabel="Consecutive days with Pomodoro sessions"
         isDark={isDark}

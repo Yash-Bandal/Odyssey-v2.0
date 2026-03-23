@@ -82,7 +82,30 @@ function StudyTrendCard({
             <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#334155' : '#e2e8f0'} />
             <XAxis dataKey="label" tick={{ fill: isDark ? '#cbd5e1' : '#64748b', fontSize: 12 }} axisLine={false} tickLine={false} />
             <YAxis tick={{ fill: isDark ? '#cbd5e1' : '#64748b', fontSize: 12 }} axisLine={false} tickLine={false} width={36} />
-            <Tooltip formatter={(value) => [`${value} min`, '']} />
+            {/* <Tooltip formatter={(value) => [`${value} min`, '']} /> */}
+
+            <Tooltip
+              formatter={(value) => [`${value} min`, '']}
+              contentStyle={{
+                backgroundColor: isDark ? '#020617' : '#ffffff', // dark: slate-950
+                border: isDark ? '1px solid #1e293b' : '1px solid #e2e8f0',
+                borderRadius: '8px',
+              }}
+              labelStyle={{
+                color: isDark ? '#e2e8f0' : '#0f172a', // text color
+                fontWeight: 600,
+              }}
+              itemStyle={{
+                color: isDark ? '#cbd5e1' : '#334155',
+                fontSize: '12px',
+              }}
+              cursor={{
+                stroke: isDark ? '#475569' : '#cbd5f5',
+                strokeWidth: 1,
+              }}
+            />
+
+            
             <Area
               type="monotone"
               dataKey="previous"

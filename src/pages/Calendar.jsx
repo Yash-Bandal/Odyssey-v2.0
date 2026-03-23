@@ -122,7 +122,8 @@ function CalendarPage({ user, semester, sessionsVersion, isDark = false }) {
         .from('sessions')
         .select('id, name, type, start_time, end_time, duration_minutes')
         .eq('user_id', user.id)
-        .eq('semester_id', semester.id)
+        // .eq('semester_id', semester.id) //current semester only
+        .not('semester_id', 'is', null)   //global 
         .order('start_time', { ascending: true })
         .limit(10000)
 

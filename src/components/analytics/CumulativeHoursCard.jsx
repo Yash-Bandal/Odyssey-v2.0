@@ -1,4 +1,4 @@
-import { ResponsiveContainer, LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip } from 'recharts'
+import { ResponsiveContainer,  LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip } from 'recharts'
 
 function CumulativeHoursCard({
   loading,
@@ -8,8 +8,8 @@ function CumulativeHoursCard({
   analyticsMutedClass,
   analyticsGridStroke,
   analyticsTick,
-
   mode,
+  isDark,
 }) {
   return (
     <section className={analyticsCardClass}>
@@ -36,14 +36,29 @@ function CumulativeHoursCard({
 
               <YAxis tick={{ fill: analyticsTick, fontSize: 12 }} axisLine={false} tickLine={false} width={36} />
               {/* <Tooltip formatter={(value) => [`${value} h`, 'Cumulative']} /> */}
-              <Tooltip
-                formatter={(value) => [`${value} h`, 'Total']}
-                labelFormatter={(label) =>
-                  mode === 'global'
-                    ? `Date: ${label}`
-                    : `Day: ${label}`
-                }
-              />
+                <Tooltip
+                  formatter={(value) => [`${value} h`, 'Total']}
+                  labelFormatter={(label) =>
+                    mode === 'global'
+                      ? `Date: ${label}`
+                      : `Day: ${label}`
+                  }
+                  contentStyle={{
+                    backgroundColor: isDark ? '#020617' : '#ffffff',
+                    border: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}`,
+                    borderRadius: '10px',
+                    padding: '8px 12px',
+                  }}
+                  labelStyle={{
+                    color: isDark ? '#f1f5f9' : '#0f172a',
+                    fontSize: '12px',
+                    fontWeight: 500,
+                  }}
+                  itemStyle={{
+                    color: isDark ? '#94a3b8' : '#475569',
+                    fontSize: '12px',
+                  }}
+                />
 
 
               <Line type="monotone" dataKey="hours" stroke="#8b5cf6" strokeWidth={2.5} dot={false} />
