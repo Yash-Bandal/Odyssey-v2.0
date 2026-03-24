@@ -21,10 +21,16 @@
             { key: "12_hours", title: "12 Hours", threshold: 720 },
         ]
 
+        // const streakDefs = [
+        //     { key: "7_day_streak", title: "7 Day Streak", threshold: 7 },
+        //     { key: "30_day_streak", title: "30 Day Streak", threshold: 30 },
+        //     { key: "100_day_streak", title: "100 Day Streak", threshold: 100 },
+        // ]
+
         const streakDefs = [
-            { key: "7_day_streak", title: "7 Day Streak", threshold: 7 },
-            { key: "30_day_streak", title: "30 Day Streak", threshold: 30 },
-            { key: "100_day_streak", title: "100 Day Streak", threshold: 100 },
+            { key: "7_day_streak", title: "7 Day Streak", subtitle: "7 Days Streak! Keep Going" },
+            { key: "30_day_streak", title: "30 Day Streak", subtitle: "1 Month Streak | You are very close to Goal"},
+            { key: "100_day_streak", title: "100 Day Streak", subtitle: "You are exceptional!" },
         ]
 
         const { data, error } = await supabase
