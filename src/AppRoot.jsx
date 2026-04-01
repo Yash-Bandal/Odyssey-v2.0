@@ -3,7 +3,8 @@ import { supabase } from './supabaseClient'
 import AppShell from './components/layout/AppShell'
 import AuthScreen from './components/auth/AuthScreen'
 import SemesterSetupWizard from './components/auth/SemesterSetupWizard'
-import { initSounds } from "./utils/sound"
+// import { initSounds } from "./utils/sound"
+import { initAudio  } from "./utils/sound"
 
 function AppRoot() {
   const [user, setUser] = useState(null)
@@ -12,18 +13,33 @@ function AppRoot() {
   const [sessionsVersion, setSessionsVersion] = useState(0)
 
   //==================== sounds init =====================
+  // useEffect(() => {
+  //   const handleFirstInteraction = () => {
+  //     initSounds()
+  //     window.removeEventListener("click", handleFirstInteraction)
+  //   }
+
+  //   window.addEventListener("click", handleFirstInteraction)
+
+  //   return () => {
+  //     window.removeEventListener("click", handleFirstInteraction)
+  //   }
+  // }, [])
+
+  
   useEffect(() => {
     const handleFirstInteraction = () => {
-      initSounds()
+      initAudio()
       window.removeEventListener("click", handleFirstInteraction)
     }
-
+  
     window.addEventListener("click", handleFirstInteraction)
-
+  
     return () => {
       window.removeEventListener("click", handleFirstInteraction)
     }
   }, [])
+  
   //=================================================
 
   // Theme state — defined once here at the root
