@@ -34,3 +34,11 @@ export const playDelete = () => {
     deleteAudio.currentTime = 0
     deleteAudio.play()
 }
+
+
+export const initSounds = () => {
+    clickAudio.load()
+    pauseAudio.load()
+    dropDownAudio.load()
+    deleteAudio.load()
+}
