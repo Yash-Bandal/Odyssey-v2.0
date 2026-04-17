@@ -1,5 +1,8 @@
 import { NavLink, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
-import { useEffect, useState } from 'react'
+// import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
+import ScrollToTop from './ScrollToTop' // adjust path if needed
+
 import { Menu, X } from 'lucide-react'
 import Logo from '../../assets/logo.png'
 import { navItems } from '../../constants/navigation'
@@ -68,6 +71,8 @@ function AppShell({
 
 
   const navigate = useNavigate()
+
+  const scrollRef = useRef(null);
 
 
 
@@ -414,7 +419,8 @@ function AppShell({
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto">
+        <main ref={scrollRef}  className="flex-1 overflow-y-auto">
+          <ScrollToTop containerRef={scrollRef} />
           <div className="px-4 sm:px-6 lg:px-8 py-6 lg:py-8 space-y-6 lg:space-y-8 max-w-7xl mx-auto">
             <Routes>
               <Route
